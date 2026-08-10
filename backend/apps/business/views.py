@@ -142,3 +142,67 @@ class EnsureWorkspaceView(APIView):
         serializer.is_valid(raise_exception=True)
         workspace = serializer.save()
         return Response(WorkspaceSerializer(workspace).data, status=status.HTTP_201_CREATED)
+
+
+class AnalyticsSummaryView(CurrentWorkspaceMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .analytics import dashboard_summary
+
+        workspace = self.get_workspace()
+        if not workspace:
+            return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+        period = request.query_params.get("period", "30D")
+        return Response(dashboard_summary(workspace, period))
+
+
+class AnalyticsRevenueView(CurrentWorkspaceMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .analytics import revenue_series
+
+        workspace = self.get_workspace()
+        if not workspace:
+            return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+        period = request.query_params.get("period", "30D")
+        return Response(revenue_series(workspace, period))
+
+
+class AnalyticsOrdersSeriesView(CurrentWorkspaceMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .analytics import orders_series
+
+        workspace = self.get_workspace()
+        if not workspace:
+            return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+        period = request.query_params.get("period", "30D")
+        return Response(orders_series(workspace, period))
+
+
+class AnalyticsTopProductsView(CurrentWorkspaceMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .analytics import top_products
+
+        workspace = self.get_workspace()
+        if not workspace:
+            return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+        period = request.query_params.get("period", "30D")
+        return Response(top_products(workspace, period))
+
+
+class AnalyticsRecentOrdersView(CurrentWorkspaceMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .analytics import recent_orders
+
+        workspace = self.get_workspace()
+        if not workspace:
+            return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response(recent_orders(workspace))

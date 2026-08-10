@@ -63,3 +63,20 @@ See `.env.example` at the project root.
 
 More sections (Features, Architecture, API, Demo Mode, Screenshots) will be
 added as the project grows.
+
+## Demo data / Seed
+
+После миграций создайте тестового пользователя и данные:
+
+```bash
+cd backend
+python manage.py migrate
+python manage.py seed_demo
+```
+
+**Логин:**
+- Email: `ignatevm601@gmail.com`
+- Пароль: `PT4_zwuS_gv3Ly2`
+
+Команда создаст workspace «NEXORA Demo Store», товары, клиентов и заказы за ~90 дней.
+
