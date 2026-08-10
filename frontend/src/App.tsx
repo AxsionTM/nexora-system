@@ -17,6 +17,8 @@ import OrdersPage from "@/pages/app/OrdersPage";
 import AnalyticsPage from "@/pages/app/AnalyticsPage";
 import ExpensesPage from "@/pages/app/ExpensesPage";
 import TeamPage from "@/pages/app/TeamPage";
+import SettingsPage from "@/pages/app/SettingsPage";
+import AIPage from "@/pages/app/AIPage";
 import { useAuthStore } from "@/stores/auth";
 
 function AuthBootstrap({ children }: { children: React.ReactNode }) {
@@ -55,24 +57,8 @@ export default function App() {
           <Route path="/customers" element={<CustomersPage />} />
           <Route path="/expenses" element={<ExpensesPage />} />
           <Route path="/team" element={<TeamPage />} />
-          <Route
-            path="/ai"
-            element={
-              <PlaceholderPage
-                title="AI Ассистент"
-                description="Задавайте вопросы о бизнесе на естественном языке."
-              />
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <PlaceholderPage
-                title="Настройки"
-                description="Профиль, workspace, интеграции и биллинг."
-              />
-            }
-          />
+          <Route path="/ai" element={<AIPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

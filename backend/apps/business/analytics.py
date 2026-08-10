@@ -1,7 +1,7 @@
 from datetime import timedelta
 from decimal import Decimal
 
-from django.db.models import Sum, Count, Avg, Q, F
+from django.db.models import Sum, Count, Avg, Q, F, ExpressionWrapper, DecimalField
 from django.db.models.functions import TruncDate, TruncMonth
 from django.utils import timezone
 
@@ -47,20 +47,34 @@ def dashboard_summary(workspace: Workspace, period: str = "30D") -> dict:
     prev_orders_count = prev_orders.count()
 
     customers_count = Customer.objects.filter(
-        workspace=workspace, created_at__gte=start, created_at__lt=end
+        workspace=workspace,
+        created_at__gte=start,
+        created_at__lt=end,
     ).count()
+
     prev_customers = Customer.objects.filter(
-        workspace=workspace, created_at__gte=prev_start, created_at__lt=start
+        workspace=workspace,
+        created_at__gte=prev_start,
+        created_at__lt=start,
     ).count()
 
     expenses_qs = Expense.objects.filter(
-        workspace=workspace, date__gte=start.date(), date__lt=end.date()
+        workspace=workspace,
+        date__gte=start.date(),
+        date__lt=end.date(),
     )
+
     prev_expenses_qs = Expense.objects.filter(
-        workspace=workspace, date__gte=prev_start.date(), date__lt=start.date()
+        workspace=workspace,
+        date__gte=prev_start.date(),
+        date__lt=start.date(),
     )
+
     expenses = expenses_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0")
-    prev_expenses = prev_expenses_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0")
+    prev_expenses = (
+        prev_expenses_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0")
+    )
+
     net_profit = revenue - expenses
     prev_net = prev_revenue - prev_expenses
 
@@ -73,6 +87,7 @@ def dashboard_summary(workspace: Workspace, period: str = "30D") -> dict:
     def pct_change(current, previous):
         if previous == 0:
             return 100.0 if current > 0 else 0.0
+
         return round(float((current - previous) / previous * 100), 1)
 
     return {
@@ -88,7 +103,7 @@ def dashboard_summary(workspace: Workspace, period: str = "30D") -> dict:
         "net_profit": str(net_profit),
         "net_profit_change": pct_change(net_profit, prev_net),
         "average_order_value": str(round(aov, 2)),
-        "conversion_rate": 0.0,  # needs traffic data; placeholder
+        "conversion_rate": 0.0,
     }
 
 
@@ -103,12 +118,18 @@ def revenue_series(workspace: Workspace, period: str = "30D") -> list:
         .annotate(value=Sum("total"))
         .order_by("day")
     )
+
     by_day = {row["day"]: float(row["value"] or 0) for row in qs}
 
     series = []
+
     for i in range(days):
         d = (start + timedelta(days=i)).date()
-        series.append({"date": d.isoformat(), "value": by_day.get(d, 0.0)})
+        series.append({
+            "date": d.isoformat(),
+            "value": by_day.get(d, 0.0),
+        })
+
     return series
 
 
@@ -117,44 +138,84 @@ def orders_series(workspace: Workspace, period: str = "30D") -> list:
     days = PERIOD_DAYS.get(period, 30)
 
     qs = (
-        Order.objects.filter(workspace=workspace, created_at__gte=start, created_at__lt=end)
+        Order.objects.filter(
+            workspace=workspace,
+            created_at__gte=start,
+            created_at__lt=end,
+        )
         .annotate(day=TruncDate("created_at"))
         .values("day")
         .annotate(value=Count("id"))
         .order_by("day")
     )
+
     by_day = {row["day"]: row["value"] for row in qs}
 
     series = []
+
     for i in range(days):
         d = (start + timedelta(days=i)).date()
-        series.append({"date": d.isoformat(), "value": by_day.get(d, 0)})
+        series.append({
+            "date": d.isoformat(),
+            "value": by_day.get(d, 0),
+        })
+
     return series
 
 
-def top_products(workspace: Workspace, period: str = "30D", limit: int = 5) -> list:
+def top_products(
+    workspace: Workspace,
+    period: str = "30D",
+    limit: int = 5,
+) -> list:
+    """
+    Return top products by revenue for the selected period.
+
+    Calculate quantity * unit_price in Python instead of nesting the
+    expression inside Sum(), which causes Django 5.1 aggregate errors.
+    """
     start, end, _ = _period_bounds(period)
-    rows = (
+
+    items = (
         OrderItem.objects.filter(
             order__workspace=workspace,
             order__payment_status=Order.PaymentStatus.PAID,
             order__created_at__gte=start,
             order__created_at__lt=end,
         )
-        .values("product_name")
-        .annotate(
-            quantity=Sum("quantity"),
-            revenue=Sum(F("quantity") * F("unit_price")),
-        )
-        .order_by("-revenue")[:limit]
+        .values("product_name", "quantity", "unit_price")
     )
+
+    totals = {}
+
+    for item in items:
+        name = item["product_name"] or "Без названия"
+        quantity = item["quantity"] or 0
+        unit_price = item["unit_price"] or Decimal("0")
+
+        if name not in totals:
+            totals[name] = {
+                "name": name,
+                "quantity": 0,
+                "revenue": Decimal("0"),
+            }
+
+        totals[name]["quantity"] += quantity
+        totals[name]["revenue"] += Decimal(str(quantity)) * Decimal(str(unit_price))
+
+    top = sorted(
+        totals.values(),
+        key=lambda item: item["revenue"],
+        reverse=True,
+    )[:limit]
+
     return [
         {
-            "name": r["product_name"],
-            "quantity": r["quantity"] or 0,
-            "revenue": str(r["revenue"] or 0),
+            "name": item["name"],
+            "quantity": item["quantity"],
+            "revenue": str(item["revenue"]),
         }
-        for r in rows
+        for item in top
     ]
 
 
@@ -164,6 +225,7 @@ def recent_orders(workspace: Workspace, limit: int = 8) -> list:
         .select_related("customer")
         .order_by("-created_at")[:limit]
     )
+
     return [
         {
             "id": o.id,
@@ -183,32 +245,48 @@ def expenses_series(workspace: Workspace, period: str = "30D") -> list:
 
     qs = (
         Expense.objects.filter(
-            workspace=workspace, date__gte=start.date(), date__lt=end.date()
+            workspace=workspace,
+            date__gte=start.date(),
+            date__lt=end.date(),
         )
         .values("date")
         .annotate(value=Sum("amount"))
         .order_by("date")
     )
+
     by_day = {row["date"]: float(row["value"] or 0) for row in qs}
 
     series = []
+
     for i in range(days):
         d = (start + timedelta(days=i)).date()
-        series.append({"date": d.isoformat(), "value": by_day.get(d, 0.0)})
+        series.append({
+            "date": d.isoformat(),
+            "value": by_day.get(d, 0.0),
+        })
+
     return series
 
 
-def expenses_by_category(workspace: Workspace, period: str = "30D") -> list:
+def expenses_by_category(
+    workspace: Workspace,
+    period: str = "30D",
+) -> list:
     start, end, _ = _period_bounds(period)
+
     rows = (
         Expense.objects.filter(
-            workspace=workspace, date__gte=start.date(), date__lt=end.date()
+            workspace=workspace,
+            date__gte=start.date(),
+            date__lt=end.date(),
         )
         .values("category")
         .annotate(total=Sum("amount"))
         .order_by("-total")
     )
+
     labels = dict(Expense.Category.choices)
+
     return [
         {
             "category": r["category"],

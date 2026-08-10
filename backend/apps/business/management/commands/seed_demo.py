@@ -16,6 +16,7 @@ from apps.business.models import (
     OrderItem,
     Expense,
     Notification,
+    Integration,
 )
 
 User = get_user_model()
@@ -230,6 +231,26 @@ class Command(BaseCommand):
                 is_read=False,
             )
         self.stdout.write(self.style.SUCCESS(f"Notifications: {len(sample_notifications)}"))
+
+
+        # Demo integrations (Stripe connected in sandbox)
+        Integration.objects.filter(workspace=workspace).delete()
+        from django.utils import timezone as tz
+        Integration.objects.create(
+            workspace=workspace,
+            provider=Integration.Provider.STRIPE,
+            status=Integration.Status.CONNECTED,
+            connected_at=tz.now(),
+            config={"mode": "sandbox"},
+        )
+        Integration.objects.create(
+            workspace=workspace,
+            provider=Integration.Provider.SHOPIFY,
+            status=Integration.Status.CONNECTED,
+            connected_at=tz.now(),
+            config={"mode": "sandbox"},
+        )
+        self.stdout.write(self.style.SUCCESS("Integrations: Stripe + Shopify (sandbox)"))
 
         self.stdout.write(self.style.SUCCESS("Seed complete. Login with:"))
         self.stdout.write(f"  email:    {SEED_EMAIL}")

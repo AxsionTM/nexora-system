@@ -18,6 +18,16 @@ from .views import (
     NotificationViewSet,
     MarkAllNotificationsReadView,
     EnsureWorkspaceView,
+    IntegrationListView,
+    IntegrationConnectView,
+    IntegrationDisconnectView,
+    PaymentListView,
+    SandboxPaymentView,
+    SandboxRefundView,
+    AIChatView,
+    AIInsightsView,
+    AIConversationListView,
+    AIConversationDetailView,
 )
 
 router = DefaultRouter()
@@ -39,5 +49,15 @@ urlpatterns = [
     path("analytics/expenses-series/", AnalyticsExpensesSeriesView.as_view(), name="analytics-expenses-series"),
     path("analytics/expenses-by-category/", AnalyticsExpensesByCategoryView.as_view(), name="analytics-expenses-by-category"),
     path("notifications/mark-all-read/", MarkAllNotificationsReadView.as_view(), name="notifications-mark-all-read"),
+    path("integrations/", IntegrationListView.as_view(), name="integrations-list"),
+    path("integrations/<str:provider>/connect/", IntegrationConnectView.as_view(), name="integrations-connect"),
+    path("integrations/<str:provider>/disconnect/", IntegrationDisconnectView.as_view(), name="integrations-disconnect"),
+    path("payments/", PaymentListView.as_view(), name="payments-list"),
+    path("payments/sandbox/", SandboxPaymentView.as_view(), name="payments-sandbox"),
+    path("payments/<int:payment_id>/refund/", SandboxRefundView.as_view(), name="payments-refund"),
+    path("ai/chat/", AIChatView.as_view(), name="ai-chat"),
+    path("ai/insights/", AIInsightsView.as_view(), name="ai-insights"),
+    path("ai/conversations/", AIConversationListView.as_view(), name="ai-conversations"),
+    path("ai/conversations/<int:pk>/", AIConversationDetailView.as_view(), name="ai-conversation-detail"),
     path("", include(router.urls)),
 ]

@@ -217,3 +217,112 @@ class Notification(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Integration(models.Model):
+    class Provider(models.TextChoices):
+        STRIPE = "stripe", "Stripe"
+        SHOPIFY = "shopify", "Shopify"
+        PAYPAL = "paypal", "PayPal"
+        WOOCOMMERCE = "woocommerce", "WooCommerce"
+        GOOGLE_ANALYTICS = "google_analytics", "Google Analytics"
+        SLACK = "slack", "Slack"
+
+    class Status(models.TextChoices):
+        CONNECTED = "connected", "Подключено"
+        DISCONNECTED = "disconnected", "Отключено"
+        ERROR = "error", "Ошибка"
+
+    workspace = models.ForeignKey(
+        Workspace, on_delete=models.CASCADE, related_name="integrations"
+    )
+    provider = models.CharField(max_length=40, choices=Provider.choices)
+    status = models.CharField(
+        max_length=20, choices=Status.choices, default=Status.DISCONNECTED
+    )
+    config = models.JSONField(default=dict, blank=True)
+    connected_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("workspace", "provider")
+        ordering = ["provider"]
+
+    def __str__(self):
+        return f"{self.provider} @ {self.workspace}"
+
+
+class Payment(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", "Ожидает"
+        SUCCESS = "success", "Успешно"
+        FAILED = "failed", "Ошибка"
+        REFUNDED = "refunded", "Возврат"
+
+    workspace = models.ForeignKey(
+        Workspace, on_delete=models.CASCADE, related_name="payments"
+    )
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="payments",
+    )
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    currency = models.CharField(max_length=3, default="USD")
+    status = models.CharField(
+        max_length=20, choices=Status.choices, default=Status.PENDING
+    )
+    provider = models.CharField(max_length=40, default="sandbox")
+    external_id = models.CharField(max_length=100, blank=True)
+    is_test = models.BooleanField(default=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Payment {self.pk} ({self.status})"
+
+
+class AIConversation(models.Model):
+    workspace = models.ForeignKey(
+        Workspace, on_delete=models.CASCADE, related_name="ai_conversations"
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="ai_conversations",
+    )
+    title = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+
+    def __str__(self):
+        return self.title or f"Conversation {self.pk}"
+
+
+class AIMessage(models.Model):
+    class Role(models.TextChoices):
+        USER = "user", "User"
+        ASSISTANT = "assistant", "Assistant"
+        SYSTEM = "system", "System"
+
+    conversation = models.ForeignKey(
+        AIConversation, on_delete=models.CASCADE, related_name="messages"
+    )
+    role = models.CharField(max_length=20, choices=Role.choices)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return f"{self.role}: {self.content[:40]}"

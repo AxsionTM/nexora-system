@@ -173,3 +173,57 @@ export async function markAllNotificationsRead(workspaceId?: number) {
   );
   return data;
 }
+
+export async function listIntegrations(workspaceId?: number) {
+  const { data } = await api.get<import("@/types/business").Integration[]>(
+    "/integrations/",
+    { params: workspaceId ? { workspace: workspaceId } : undefined }
+  );
+  return data;
+}
+
+export async function connectIntegration(provider: string, workspaceId?: number) {
+  const { data } = await api.post<import("@/types/business").Integration>(
+    `/integrations/${provider}/connect/`,
+    {},
+    { params: workspaceId ? { workspace: workspaceId } : undefined }
+  );
+  return data;
+}
+
+export async function disconnectIntegration(provider: string, workspaceId?: number) {
+  const { data } = await api.post<import("@/types/business").Integration>(
+    `/integrations/${provider}/disconnect/`,
+    {},
+    { params: workspaceId ? { workspace: workspaceId } : undefined }
+  );
+  return data;
+}
+
+export async function listPayments(workspaceId?: number) {
+  const { data } = await api.get<import("@/types/business").Payment[]>("/payments/", {
+    params: workspaceId ? { workspace: workspaceId } : undefined,
+  });
+  return data;
+}
+
+export async function createSandboxPayment(
+  payload: { amount: string; order_id?: number | null; simulate: "success" | "failed" | "pending" },
+  workspaceId?: number
+) {
+  const { data } = await api.post<import("@/types/business").Payment>(
+    "/payments/sandbox/",
+    payload,
+    { params: workspaceId ? { workspace: workspaceId } : undefined }
+  );
+  return data;
+}
+
+export async function refundPayment(paymentId: number, workspaceId?: number) {
+  const { data } = await api.post<import("@/types/business").Payment>(
+    `/payments/${paymentId}/refund/`,
+    {},
+    { params: workspaceId ? { workspace: workspaceId } : undefined }
+  );
+  return data;
+}

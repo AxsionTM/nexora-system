@@ -1,7 +1,7 @@
 from django.utils.text import slugify
 from rest_framework import serializers
 
-from .models import Workspace, WorkspaceMember, Product, Customer, Order, OrderItem, Expense, Notification
+from .models import Workspace, WorkspaceMember, Product, Customer, Order, OrderItem, Expense, Notification, Integration, Payment, AIConversation, AIMessage
 
 
 class WorkspaceSerializer(serializers.ModelSerializer):
@@ -174,3 +174,63 @@ class NotificationSerializer(serializers.ModelSerializer):
             "is_read", "link", "created_at",
         )
         read_only_fields = ("id", "created_at")
+
+
+
+class IntegrationSerializer(serializers.ModelSerializer):
+    provider_display = serializers.CharField(source="get_provider_display", read_only=True)
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
+
+    class Meta:
+        model = Integration
+        fields = (
+            "id", "provider", "provider_display", "status", "status_display",
+            "connected_at", "updated_at",
+        )
+        read_only_fields = ("id", "connected_at", "updated_at")
+
+
+class PaymentSerializer(serializers.ModelSerializer):
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
+    order_id = serializers.PrimaryKeyRelatedField(source="order", read_only=True, allow_null=True)
+
+    class Meta:
+        model = Payment
+        fields = (
+            "id", "order", "order_id", "amount", "currency", "status", "status_display",
+            "provider", "external_id", "is_test", "created_at", "updated_at",
+        )
+        read_only_fields = ("id", "external_id", "provider", "is_test", "created_at", "updated_at")
+
+
+class SandboxPaymentSerializer(serializers.Serializer):
+    amount = serializers.DecimalField(max_digits=12, decimal_places=2)
+    order_id = serializers.IntegerField(required=False, allow_null=True)
+    simulate = serializers.ChoiceField(
+        choices=["success", "failed", "pending"],
+        default="success",
+    )
+
+
+class AIChatSerializer(serializers.Serializer):
+    message = serializers.CharField(max_length=2000)
+    conversation_id = serializers.IntegerField(required=False, allow_null=True)
+    period = serializers.ChoiceField(
+        choices=["7D", "30D", "3M", "6M", "1Y"], default="30D", required=False
+    )
+
+
+class AIMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AIMessage
+        fields = ("id", "role", "content", "created_at")
+        read_only_fields = fields
+
+
+class AIConversationSerializer(serializers.ModelSerializer):
+    messages = AIMessageSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = AIConversation
+        fields = ("id", "title", "created_at", "updated_at", "messages")
+        read_only_fields = fields

@@ -125,3 +125,10 @@ SIMPLE_JWT = {
     "UPDATE_LAST_LOGIN": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
+
+
+# AI — key only from env, never in frontend / source code
+GEMINI_API_KEY = env("GEMINI_API_KEY", default="")
+GEMINI_MODEL = env("GEMINI_MODEL", default="gemini-2.5-flash")
+# legacy aliases (optional)
+OPENAI_API_KEY = env("OPENAI_API_KEY", default="")

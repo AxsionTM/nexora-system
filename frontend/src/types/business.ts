@@ -142,3 +142,40 @@ export interface NotificationsResponse {
   unread_count: number;
   results: AppNotification[];
 }
+
+export type IntegrationProvider =
+  | "stripe"
+  | "shopify"
+  | "paypal"
+  | "woocommerce"
+  | "google_analytics"
+  | "slack";
+
+export type IntegrationStatus = "connected" | "disconnected" | "error";
+
+export interface Integration {
+  id: number | null;
+  provider: IntegrationProvider;
+  provider_display: string;
+  status: IntegrationStatus;
+  status_display: string;
+  connected_at: string | null;
+  updated_at: string | null;
+}
+
+export type PaymentStatusType = "pending" | "success" | "failed" | "refunded";
+
+export interface Payment {
+  id: number;
+  order: number | null;
+  order_id: number | null;
+  amount: string;
+  currency: string;
+  status: PaymentStatusType;
+  status_display: string;
+  provider: string;
+  external_id: string;
+  is_test: boolean;
+  created_at: string;
+  updated_at: string;
+}

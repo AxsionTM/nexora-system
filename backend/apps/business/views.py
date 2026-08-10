@@ -423,3 +423,341 @@ class MarkAllNotificationsReadView(CurrentWorkspaceMixin, APIView):
             Q(user=request.user) | Q(user__isnull=True)
         ).update(is_read=True)
         return Response({"marked": updated})
+
+
+class IntegrationListView(CurrentWorkspaceMixin, APIView):
+    """List all known providers with connection status for the workspace."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .models import Integration
+        from .serializers import IntegrationSerializer
+        from django.utils import timezone
+
+        workspace = self.get_workspace()
+        if not workspace:
+            return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        existing = {
+            i.provider: i
+            for i in Integration.objects.filter(workspace=workspace)
+        }
+        result = []
+        for value, label in Integration.Provider.choices:
+            if value in existing:
+                result.append(IntegrationSerializer(existing[value]).data)
+            else:
+                result.append(
+                    {
+                        "id": None,
+                        "provider": value,
+                        "provider_display": label,
+                        "status": Integration.Status.DISCONNECTED,
+                        "status_display": "Отключено",
+                        "connected_at": None,
+                        "updated_at": None,
+                    }
+                )
+        return Response(result)
+
+
+class IntegrationConnectView(CurrentWorkspaceMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, provider: str):
+        from .models import Integration, Notification
+        from .serializers import IntegrationSerializer
+        from django.utils import timezone
+
+        workspace = self.get_workspace()
+        if not workspace:
+            return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        valid = {c[0] for c in Integration.Provider.choices}
+        if provider not in valid:
+            return Response({"detail": "Unknown provider"}, status=status.HTTP_400_BAD_REQUEST)
+
+        integration, _ = Integration.objects.get_or_create(
+            workspace=workspace,
+            provider=provider,
+        )
+        integration.status = Integration.Status.CONNECTED
+        integration.connected_at = timezone.now()
+        integration.config = {"mode": "sandbox", "connected_by": request.user.email}
+        integration.save()
+
+        Notification.objects.create(
+            workspace=workspace,
+            user=request.user,
+            type=Notification.Type.SYSTEM,
+            title=f"Интеграция {integration.get_provider_display()} подключена",
+            message="Режим DEMO / TEST — реальные платежи не выполняются.",
+            link="/settings",
+        )
+        return Response(IntegrationSerializer(integration).data)
+
+
+class IntegrationDisconnectView(CurrentWorkspaceMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, provider: str):
+        from .models import Integration
+        from .serializers import IntegrationSerializer
+
+        workspace = self.get_workspace()
+        if not workspace:
+            return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            integration = Integration.objects.get(workspace=workspace, provider=provider)
+        except Integration.DoesNotExist:
+            return Response({"detail": "Not connected"}, status=status.HTTP_404_NOT_FOUND)
+
+        integration.status = Integration.Status.DISCONNECTED
+        integration.connected_at = None
+        integration.config = {}
+        integration.save()
+        return Response(IntegrationSerializer(integration).data)
+
+
+class PaymentListView(CurrentWorkspaceMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .models import Payment
+        from .serializers import PaymentSerializer
+
+        workspace = self.get_workspace()
+        if not workspace:
+            return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+        payments = Payment.objects.filter(workspace=workspace)[:50]
+        return Response(PaymentSerializer(payments, many=True).data)
+
+
+class SandboxPaymentView(CurrentWorkspaceMixin, APIView):
+    """Simulate a payment without real money."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        import uuid
+        from decimal import Decimal
+        from .models import Payment, Order, Notification
+        from .serializers import SandboxPaymentSerializer, PaymentSerializer
+
+        workspace = self.get_workspace()
+        if not workspace:
+            return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = SandboxPaymentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        order = None
+        order_id = data.get("order_id")
+        if order_id:
+            order = Order.objects.filter(pk=order_id, workspace=workspace).first()
+
+        simulate = data.get("simulate", "success")
+        status_map = {
+            "success": Payment.Status.SUCCESS,
+            "failed": Payment.Status.FAILED,
+            "pending": Payment.Status.PENDING,
+        }
+        pay_status = status_map.get(simulate, Payment.Status.SUCCESS)
+
+        payment = Payment.objects.create(
+            workspace=workspace,
+            order=order,
+            amount=data["amount"],
+            status=pay_status,
+            provider="sandbox",
+            external_id=f"test_{uuid.uuid4().hex[:12]}",
+            is_test=True,
+            metadata={"simulated": simulate},
+        )
+
+        if order and pay_status == Payment.Status.SUCCESS:
+            order.payment_status = Order.PaymentStatus.PAID
+            order.save(update_fields=["payment_status", "updated_at"])
+        elif order and pay_status == Payment.Status.FAILED:
+            order.payment_status = Order.PaymentStatus.UNPAID
+            order.save(update_fields=["payment_status", "updated_at"])
+
+        notif_title = {
+            Payment.Status.SUCCESS: "Платёж успешен",
+            Payment.Status.FAILED: "Платёж не прошёл",
+            Payment.Status.PENDING: "Платёж в обработке",
+        }.get(pay_status, "Платёж")
+
+        Notification.objects.create(
+            workspace=workspace,
+            user=request.user,
+            type=Notification.Type.PAYMENT,
+            title=notif_title,
+            message=f"Sandbox: ${data['amount']} — {payment.get_status_display()} (тест).",
+            link="/settings",
+        )
+
+        return Response(PaymentSerializer(payment).data, status=status.HTTP_201_CREATED)
+
+
+class SandboxRefundView(CurrentWorkspaceMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, payment_id: int):
+        from .models import Payment, Order, Notification
+        from .serializers import PaymentSerializer
+
+        workspace = self.get_workspace()
+        if not workspace:
+            return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            payment = Payment.objects.get(pk=payment_id, workspace=workspace)
+        except Payment.DoesNotExist:
+            return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if payment.status != Payment.Status.SUCCESS:
+            return Response(
+                {"detail": "Возврат возможен только для успешного платежа."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        payment.status = Payment.Status.REFUNDED
+        payment.save(update_fields=["status", "updated_at"])
+
+        if payment.order:
+            payment.order.payment_status = Order.PaymentStatus.REFUNDED
+            payment.order.save(update_fields=["payment_status", "updated_at"])
+
+        Notification.objects.create(
+            workspace=workspace,
+            user=request.user,
+            type=Notification.Type.PAYMENT,
+            title="Возврат выполнен",
+            message=f"Sandbox refund: ${payment.amount} (тест).",
+            link="/settings",
+        )
+        return Response(PaymentSerializer(payment).data)
+
+
+class AIChatView(CurrentWorkspaceMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from .serializers import AIChatSerializer, AIMessageSerializer
+        from .models import AIConversation, AIMessage
+        from .ai_service import answer_question
+
+        workspace = self.get_workspace()
+        if not workspace:
+            return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = AIChatSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        message = data["message"].strip()
+        period = data.get("period") or "30D"
+        conv_id = data.get("conversation_id")
+
+        if conv_id:
+            conversation = AIConversation.objects.filter(
+                pk=conv_id, workspace=workspace, user=request.user
+            ).first()
+            if not conversation:
+                return Response({"detail": "Conversation not found"}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            title = message[:60] + ("…" if len(message) > 60 else "")
+            conversation = AIConversation.objects.create(
+                workspace=workspace,
+                user=request.user,
+                title=title,
+            )
+
+        AIMessage.objects.create(
+            conversation=conversation,
+            role=AIMessage.Role.USER,
+            content=message,
+        )
+
+        history = [
+            {"role": m.role, "content": m.content}
+            for m in conversation.messages.exclude(role=AIMessage.Role.SYSTEM)
+        ]
+
+        result = answer_question(workspace, message, history=history[:-1], period=period)
+
+        assistant_msg = AIMessage.objects.create(
+            conversation=conversation,
+            role=AIMessage.Role.ASSISTANT,
+            content=result["answer"],
+        )
+        conversation.save(update_fields=["updated_at"])
+
+        return Response(
+            {
+                "conversation_id": conversation.id,
+                "message": AIMessageSerializer(assistant_msg).data,
+                "provider": result["provider"],
+                "insights": result["insights"],
+            }
+        )
+
+
+class AIInsightsView(CurrentWorkspaceMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .ai_service import generate_insights
+
+        workspace = self.get_workspace()
+        if not workspace:
+            return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+        period = request.query_params.get("period", "30D")
+        return Response({"insights": generate_insights(workspace=workspace, period=period)})
+
+
+class AIConversationListView(CurrentWorkspaceMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .models import AIConversation
+        from .serializers import AIConversationSerializer
+
+        workspace = self.get_workspace()
+        if not workspace:
+            return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+        convs = AIConversation.objects.filter(
+            workspace=workspace, user=request.user
+        ).prefetch_related("messages")[:20]
+        # list without full messages for sidebar
+        data = [
+            {
+                "id": c.id,
+                "title": c.title,
+                "created_at": c.created_at.isoformat(),
+                "updated_at": c.updated_at.isoformat(),
+            }
+            for c in convs
+        ]
+        return Response(data)
+
+
+class AIConversationDetailView(CurrentWorkspaceMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk: int):
+        from .models import AIConversation
+        from .serializers import AIConversationSerializer
+
+        workspace = self.get_workspace()
+        if not workspace:
+            return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+        conv = AIConversation.objects.filter(
+            pk=pk, workspace=workspace, user=request.user
+        ).prefetch_related("messages").first()
+        if not conv:
+            return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+        return Response(AIConversationSerializer(conv).data)
