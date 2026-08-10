@@ -41,3 +41,23 @@ export async function confirmPasswordReset(
   );
   return data;
 }
+
+export async function updateProfile(payload: {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+}) {
+  const { data } = await api.patch<User>("/auth/me/", payload);
+  return data;
+}
+
+export async function changePassword(payload: {
+  old_password: string;
+  new_password: string;
+}) {
+  const { data } = await api.post<{ message: string }>(
+    "/auth/change-password/",
+    payload
+  );
+  return data;
+}
