@@ -92,7 +92,7 @@ export default function DashboardPage() {
     ? [
         { label: "Выручка", value: formatMoney(s.revenue), change: s.revenue_change },
         { label: "Заказы", value: String(s.orders), change: s.orders_change },
-        { label: "Клиенты", value: String(s.customers), change: s.customers_change },
+        { label: "Расходы", value: formatMoney(s.expenses), change: s.expenses_change },
         { label: "Чистая прибыль", value: formatMoney(s.net_profit), change: s.net_profit_change },
       ]
     : [];

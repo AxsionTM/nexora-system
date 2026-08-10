@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Workspace, WorkspaceMember, Product, Customer, Order, OrderItem
+from .models import Workspace, WorkspaceMember, Product, Customer, Order, OrderItem, Expense
 
 
 class WorkspaceMemberInline(admin.TabularInline):
@@ -37,3 +37,10 @@ class OrderAdmin(admin.ModelAdmin):
     list_display = ("id", "workspace", "customer", "status", "payment_status", "total", "created_at")
     list_filter = ("status", "payment_status")
     inlines = [OrderItemInline]
+
+
+@admin.register(Expense)
+class ExpenseAdmin(admin.ModelAdmin):
+    list_display = ("title", "category", "amount", "date", "workspace")
+    list_filter = ("category", "workspace")
+    search_fields = ("title",)

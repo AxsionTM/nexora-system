@@ -14,6 +14,7 @@ from apps.business.models import (
     Customer,
     Order,
     OrderItem,
+    Expense,
 )
 
 User = get_user_model()
@@ -96,6 +97,7 @@ class Command(BaseCommand):
         Order.objects.filter(workspace=workspace).delete()
         Product.objects.filter(workspace=workspace).delete()
         Customer.objects.filter(workspace=workspace).delete()
+        Expense.objects.filter(workspace=workspace).delete()
 
         products = []
         for name, sku, category, price, cost, stock in PRODUCTS:
@@ -178,6 +180,34 @@ class Command(BaseCommand):
                 order_count += 1
 
         self.stdout.write(self.style.SUCCESS(f"Orders: {order_count}"))
+        # Expenses over last 90 days
+        expense_templates = [
+            ("Реклама Google Ads", Expense.Category.MARKETING, "450", 12),
+            ("Реклама VK", Expense.Category.MARKETING, "280", 18),
+            ("Зарплата менеджера", Expense.Category.SALARY, "1200", 30),
+            ("Аренда офиса", Expense.Category.RENT, "800", 30),
+            ("Подписка Notion", Expense.Category.SOFTWARE, "20", 30),
+            ("Подписка Figma", Expense.Category.SOFTWARE, "15", 30),
+            ("Доставка СДЭК", Expense.Category.LOGISTICS, "90", 7),
+            ("Упаковка", Expense.Category.LOGISTICS, "40", 14),
+            ("Налог УСН", Expense.Category.TAXES, "350", 30),
+            ("Канцтовары", Expense.Category.OTHER, "25", 20),
+        ]
+        expense_count = 0
+        for days_ago in range(90, -1, -1):
+            for title, category, amount, every_n in expense_templates:
+                if days_ago % every_n == 0:
+                    Expense.objects.create(
+                        workspace=workspace,
+                        title=title,
+                        category=category,
+                        amount=Decimal(amount),
+                        date=(now - timedelta(days=days_ago)).date(),
+                        notes="",
+                    )
+                    expense_count += 1
+        self.stdout.write(self.style.SUCCESS(f"Expenses: {expense_count}"))
+
         self.stdout.write(self.style.SUCCESS("Seed complete. Login with:"))
         self.stdout.write(f"  email:    {SEED_EMAIL}")
         self.stdout.write(f"  password: {SEED_PASSWORD}")

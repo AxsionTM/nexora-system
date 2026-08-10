@@ -5,7 +5,7 @@ from django.db.models import Sum, Count, Avg, Q, F
 from django.db.models.functions import TruncDate, TruncMonth
 from django.utils import timezone
 
-from .models import Order, OrderItem, Product, Customer, Workspace
+from .models import Order, OrderItem, Product, Customer, Workspace, Expense
 
 
 PERIOD_DAYS = {
@@ -53,11 +53,16 @@ def dashboard_summary(workspace: Workspace, period: str = "30D") -> dict:
         workspace=workspace, created_at__gte=prev_start, created_at__lt=start
     ).count()
 
-    # Expenses not yet modeled in full — net profit ≈ revenue for now until COMMIT 06
-    # Leave a zero expenses field so frontend is ready
-    expenses = Decimal("0")
+    expenses_qs = Expense.objects.filter(
+        workspace=workspace, date__gte=start.date(), date__lt=end.date()
+    )
+    prev_expenses_qs = Expense.objects.filter(
+        workspace=workspace, date__gte=prev_start.date(), date__lt=start.date()
+    )
+    expenses = expenses_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0")
+    prev_expenses = prev_expenses_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0")
     net_profit = revenue - expenses
-    prev_net = prev_revenue
+    prev_net = prev_revenue - prev_expenses
 
     aov = (
         current_orders.aggregate(a=Avg("total"))["a"] or Decimal("0")
@@ -79,7 +84,7 @@ def dashboard_summary(workspace: Workspace, period: str = "30D") -> dict:
         "customers": customers_count,
         "customers_change": pct_change(customers_count, prev_customers),
         "expenses": str(expenses),
-        "expenses_change": 0.0,
+        "expenses_change": pct_change(expenses, prev_expenses),
         "net_profit": str(net_profit),
         "net_profit_change": pct_change(net_profit, prev_net),
         "average_order_value": str(round(aov, 2)),
@@ -169,4 +174,46 @@ def recent_orders(workspace: Workspace, limit: int = 8) -> list:
             "created_at": o.created_at.isoformat(),
         }
         for o in orders
+    ]
+
+
+def expenses_series(workspace: Workspace, period: str = "30D") -> list:
+    start, end, _ = _period_bounds(period)
+    days = PERIOD_DAYS.get(period, 30)
+
+    qs = (
+        Expense.objects.filter(
+            workspace=workspace, date__gte=start.date(), date__lt=end.date()
+        )
+        .values("date")
+        .annotate(value=Sum("amount"))
+        .order_by("date")
+    )
+    by_day = {row["date"]: float(row["value"] or 0) for row in qs}
+
+    series = []
+    for i in range(days):
+        d = (start + timedelta(days=i)).date()
+        series.append({"date": d.isoformat(), "value": by_day.get(d, 0.0)})
+    return series
+
+
+def expenses_by_category(workspace: Workspace, period: str = "30D") -> list:
+    start, end, _ = _period_bounds(period)
+    rows = (
+        Expense.objects.filter(
+            workspace=workspace, date__gte=start.date(), date__lt=end.date()
+        )
+        .values("category")
+        .annotate(total=Sum("amount"))
+        .order_by("-total")
+    )
+    labels = dict(Expense.Category.choices)
+    return [
+        {
+            "category": r["category"],
+            "label": labels.get(r["category"], r["category"]),
+            "total": str(r["total"] or 0),
+        }
+        for r in rows
     ]

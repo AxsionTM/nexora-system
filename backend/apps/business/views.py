@@ -5,12 +5,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Workspace, WorkspaceMember, Product, Customer, Order
+from .models import Workspace, WorkspaceMember, Product, Customer, Order, Expense
 from .serializers import (
     WorkspaceSerializer,
     ProductSerializer,
     CustomerSerializer,
     OrderSerializer,
+    ExpenseSerializer,
 )
 
 
@@ -206,3 +207,55 @@ class AnalyticsRecentOrdersView(CurrentWorkspaceMixin, APIView):
         if not workspace:
             return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
         return Response(recent_orders(workspace))
+
+
+
+class ExpenseViewSet(CurrentWorkspaceMixin, viewsets.ModelViewSet):
+    serializer_class = ExpenseSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        workspace = self.get_workspace()
+        if not workspace:
+            return Expense.objects.none()
+        qs = Expense.objects.filter(workspace=workspace)
+        category = self.request.query_params.get("category")
+        if category:
+            qs = qs.filter(category=category)
+        search = self.request.query_params.get("search")
+        if search:
+            qs = qs.filter(Q(title__icontains=search) | Q(notes__icontains=search))
+        return qs
+
+    def perform_create(self, serializer):
+        workspace = self.get_workspace()
+        if not workspace:
+            raise ValueError("Workspace not found")
+        serializer.save(workspace=workspace)
+
+
+
+class AnalyticsExpensesSeriesView(CurrentWorkspaceMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .analytics import expenses_series
+
+        workspace = self.get_workspace()
+        if not workspace:
+            return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+        period = request.query_params.get("period", "30D")
+        return Response(expenses_series(workspace, period))
+
+
+class AnalyticsExpensesByCategoryView(CurrentWorkspaceMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .analytics import expenses_by_category
+
+        workspace = self.get_workspace()
+        if not workspace:
+            return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+        period = request.query_params.get("period", "30D")
+        return Response(expenses_by_category(workspace, period))

@@ -72,3 +72,35 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
   refunded: "Возврат",
   partial: "Частично",
 };
+
+
+export type ExpenseCategory =
+  | "marketing"
+  | "salary"
+  | "rent"
+  | "software"
+  | "logistics"
+  | "taxes"
+  | "other";
+
+export interface Expense {
+  id: number;
+  title: string;
+  category: ExpenseCategory;
+  category_display: string;
+  amount: string;
+  date: string;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
+  marketing: "Маркетинг",
+  salary: "Зарплата",
+  rent: "Аренда",
+  software: "ПО / Подписки",
+  logistics: "Логистика",
+  taxes: "Налоги",
+  other: "Прочее",
+};

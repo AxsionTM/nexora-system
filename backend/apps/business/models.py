@@ -154,3 +154,33 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.product_name} x{self.quantity}"
+
+
+class Expense(models.Model):
+    class Category(models.TextChoices):
+        MARKETING = "marketing", "Маркетинг"
+        SALARY = "salary", "Зарплата"
+        RENT = "rent", "Аренда"
+        SOFTWARE = "software", "ПО / Подписки"
+        LOGISTICS = "logistics", "Логистика"
+        TAXES = "taxes", "Налоги"
+        OTHER = "other", "Прочее"
+
+    workspace = models.ForeignKey(
+        Workspace, on_delete=models.CASCADE, related_name="expenses"
+    )
+    title = models.CharField(max_length=255)
+    category = models.CharField(
+        max_length=20, choices=Category.choices, default=Category.OTHER
+    )
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    date = models.DateField()
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-date", "-created_at"]
+
+    def __str__(self):
+        return f"{self.title} ({self.amount})"

@@ -1,7 +1,7 @@
 from django.utils.text import slugify
 from rest_framework import serializers
 
-from .models import Workspace, WorkspaceMember, Product, Customer, Order, OrderItem
+from .models import Workspace, WorkspaceMember, Product, Customer, Order, OrderItem, Expense
 
 
 class WorkspaceSerializer(serializers.ModelSerializer):
@@ -125,3 +125,15 @@ class OrderSerializer(serializers.ModelSerializer):
                 )
             instance.recalculate_total()
         return instance
+
+
+class ExpenseSerializer(serializers.ModelSerializer):
+    category_display = serializers.CharField(source="get_category_display", read_only=True)
+
+    class Meta:
+        model = Expense
+        fields = (
+            "id", "title", "category", "category_display",
+            "amount", "date", "notes", "created_at", "updated_at",
+        )
+        read_only_fields = ("id", "created_at", "updated_at")

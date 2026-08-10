@@ -7,10 +7,13 @@ from .views import (
     AnalyticsOrdersSeriesView,
     AnalyticsTopProductsView,
     AnalyticsRecentOrdersView,
+    AnalyticsExpensesSeriesView,
+    AnalyticsExpensesByCategoryView,
     WorkspaceViewSet,
     ProductViewSet,
     CustomerViewSet,
     OrderViewSet,
+    ExpenseViewSet,
     EnsureWorkspaceView,
 )
 
@@ -19,6 +22,7 @@ router.register("workspaces", WorkspaceViewSet, basename="workspace")
 router.register("products", ProductViewSet, basename="product")
 router.register("customers", CustomerViewSet, basename="customer")
 router.register("orders", OrderViewSet, basename="order")
+router.register("expenses", ExpenseViewSet, basename="expense")
 
 urlpatterns = [
     path("workspaces/ensure/", EnsureWorkspaceView.as_view(), name="ensure-workspace"),
@@ -27,5 +31,7 @@ urlpatterns = [
     path("analytics/orders-series/", AnalyticsOrdersSeriesView.as_view(), name="analytics-orders-series"),
     path("analytics/top-products/", AnalyticsTopProductsView.as_view(), name="analytics-top-products"),
     path("analytics/recent-orders/", AnalyticsRecentOrdersView.as_view(), name="analytics-recent-orders"),
+    path("analytics/expenses-series/", AnalyticsExpensesSeriesView.as_view(), name="analytics-expenses-series"),
+    path("analytics/expenses-by-category/", AnalyticsExpensesByCategoryView.as_view(), name="analytics-expenses-by-category"),
     path("", include(router.urls)),
 ]

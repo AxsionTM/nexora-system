@@ -87,3 +87,39 @@ export async function updateOrder(id: number, payload: Partial<Order> & { items?
 export async function deleteOrder(id: number) {
   await api.delete(`/orders/${id}/`);
 }
+
+export async function listExpenses(params?: {
+  search?: string;
+  category?: string;
+  workspace?: number;
+}) {
+  const { data } = await api.get<import("@/types/business").Expense[]>("/expenses/", {
+    params,
+  });
+  return data;
+}
+
+export async function createExpense(
+  payload: Partial<import("@/types/business").Expense>,
+  workspaceId?: number
+) {
+  const { data } = await api.post<import("@/types/business").Expense>("/expenses/", payload, {
+    params: workspaceId ? { workspace: workspaceId } : undefined,
+  });
+  return data;
+}
+
+export async function updateExpense(
+  id: number,
+  payload: Partial<import("@/types/business").Expense>
+) {
+  const { data } = await api.patch<import("@/types/business").Expense>(
+    `/expenses/${id}/`,
+    payload
+  );
+  return data;
+}
+
+export async function deleteExpense(id: number) {
+  await api.delete(`/expenses/${id}/`);
+}
