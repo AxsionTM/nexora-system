@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Workspace, WorkspaceMember, Product, Customer, Order, Expense
+from .models import Workspace, WorkspaceMember, Product, Customer, Order, Expense, Notification
 from .serializers import (
     WorkspaceSerializer,
     ProductSerializer,
@@ -259,3 +259,167 @@ class AnalyticsExpensesByCategoryView(CurrentWorkspaceMixin, APIView):
             return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
         period = request.query_params.get("period", "30D")
         return Response(expenses_by_category(workspace, period))
+
+
+class TeamMemberViewSet(CurrentWorkspaceMixin, viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request):
+        from .serializers import WorkspaceMemberSerializer
+
+        workspace = self.get_workspace()
+        if not workspace:
+            return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+        members = WorkspaceMember.objects.filter(workspace=workspace).select_related("user")
+        return Response(WorkspaceMemberSerializer(members, many=True).data)
+
+    def create(self, request):
+        """Invite member by email (creates user stub if needed, or links existing)."""
+        from django.contrib.auth import get_user_model
+        from .serializers import InviteMemberSerializer, WorkspaceMemberSerializer
+        from .models import Notification
+
+        User = get_user_model()
+        workspace = self.get_workspace()
+        if not workspace:
+            return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = InviteMemberSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data["email"].lower()
+        role = serializer.validated_data["role"]
+
+        if role == WorkspaceMember.Role.OWNER:
+            return Response(
+                {"role": ["Нельзя назначить роль владельца через приглашение."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user, created = User.objects.get_or_create(
+            email=email,
+            defaults={"first_name": email.split("@")[0]},
+        )
+        if created:
+            user.set_unusable_password()
+            user.save()
+
+        member, member_created = WorkspaceMember.objects.get_or_create(
+            workspace=workspace,
+            user=user,
+            defaults={"role": role},
+        )
+        if not member_created:
+            return Response(
+                {"email": ["Этот пользователь уже в команде."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        Notification.objects.create(
+            workspace=workspace,
+            user=request.user,
+            type=Notification.Type.TEAM,
+            title="Новый участник команды",
+            message=f"{email} добавлен с ролью «{member.get_role_display()}».",
+            link="/team",
+        )
+        return Response(
+            WorkspaceMemberSerializer(member).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    def partial_update(self, request, pk=None):
+        from .serializers import WorkspaceMemberSerializer
+
+        workspace = self.get_workspace()
+        if not workspace:
+            return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            member = WorkspaceMember.objects.get(pk=pk, workspace=workspace)
+        except WorkspaceMember.DoesNotExist:
+            return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if member.role == WorkspaceMember.Role.OWNER:
+            return Response(
+                {"role": ["Роль владельца нельзя изменить."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        role = request.data.get("role")
+        if role and role in dict(WorkspaceMember.Role.choices):
+            if role == WorkspaceMember.Role.OWNER:
+                return Response(
+                    {"role": ["Нельзя назначить роль владельца."]},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            member.role = role
+            member.save(update_fields=["role"])
+        return Response(WorkspaceMemberSerializer(member).data)
+
+    def destroy(self, request, pk=None):
+        workspace = self.get_workspace()
+        if not workspace:
+            return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            member = WorkspaceMember.objects.get(pk=pk, workspace=workspace)
+        except WorkspaceMember.DoesNotExist:
+            return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if member.role == WorkspaceMember.Role.OWNER:
+            return Response(
+                {"detail": "Нельзя удалить владельца."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        member.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class NotificationViewSet(CurrentWorkspaceMixin, viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "patch", "head", "options"]
+
+    def get_queryset(self):
+        from .models import Notification
+
+        workspace = self.get_workspace()
+        if not workspace:
+            return Notification.objects.none()
+        return Notification.objects.filter(
+            workspace=workspace
+        ).filter(
+            Q(user=self.request.user) | Q(user__isnull=True)
+        )
+
+    def get_serializer_class(self):
+        from .serializers import NotificationSerializer
+        return NotificationSerializer
+
+    def partial_update(self, request, *args, **kwargs):
+        notification = self.get_object()
+        if "is_read" in request.data:
+            notification.is_read = bool(request.data["is_read"])
+            notification.save(update_fields=["is_read"])
+        from .serializers import NotificationSerializer
+        return Response(NotificationSerializer(notification).data)
+
+    def list(self, request, *args, **kwargs):
+        qs = self.get_queryset()
+        from .serializers import NotificationSerializer
+        unread = qs.filter(is_read=False).count()
+        data = NotificationSerializer(qs[:50], many=True).data
+        return Response({"unread_count": unread, "results": data})
+
+
+class MarkAllNotificationsReadView(CurrentWorkspaceMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from .models import Notification
+
+        workspace = self.get_workspace()
+        if not workspace:
+            return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+        updated = Notification.objects.filter(
+            workspace=workspace, is_read=False
+        ).filter(
+            Q(user=request.user) | Q(user__isnull=True)
+        ).update(is_read=True)
+        return Response({"marked": updated})

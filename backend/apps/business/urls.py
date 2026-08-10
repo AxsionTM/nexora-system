@@ -14,6 +14,9 @@ from .views import (
     CustomerViewSet,
     OrderViewSet,
     ExpenseViewSet,
+    TeamMemberViewSet,
+    NotificationViewSet,
+    MarkAllNotificationsReadView,
     EnsureWorkspaceView,
 )
 
@@ -23,6 +26,8 @@ router.register("products", ProductViewSet, basename="product")
 router.register("customers", CustomerViewSet, basename="customer")
 router.register("orders", OrderViewSet, basename="order")
 router.register("expenses", ExpenseViewSet, basename="expense")
+router.register("team", TeamMemberViewSet, basename="team")
+router.register("notifications", NotificationViewSet, basename="notification")
 
 urlpatterns = [
     path("workspaces/ensure/", EnsureWorkspaceView.as_view(), name="ensure-workspace"),
@@ -33,5 +38,6 @@ urlpatterns = [
     path("analytics/recent-orders/", AnalyticsRecentOrdersView.as_view(), name="analytics-recent-orders"),
     path("analytics/expenses-series/", AnalyticsExpensesSeriesView.as_view(), name="analytics-expenses-series"),
     path("analytics/expenses-by-category/", AnalyticsExpensesByCategoryView.as_view(), name="analytics-expenses-by-category"),
+    path("notifications/mark-all-read/", MarkAllNotificationsReadView.as_view(), name="notifications-mark-all-read"),
     path("", include(router.urls)),
 ]

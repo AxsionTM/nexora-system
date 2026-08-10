@@ -123,3 +123,53 @@ export async function updateExpense(
 export async function deleteExpense(id: number) {
   await api.delete(`/expenses/${id}/`);
 }
+
+export async function listTeam(workspaceId?: number) {
+  const { data } = await api.get<import("@/types/business").TeamMember[]>("/team/", {
+    params: workspaceId ? { workspace: workspaceId } : undefined,
+  });
+  return data;
+}
+
+export async function inviteMember(
+  payload: { email: string; role: string },
+  workspaceId?: number
+) {
+  const { data } = await api.post<import("@/types/business").TeamMember>("/team/", payload, {
+    params: workspaceId ? { workspace: workspaceId } : undefined,
+  });
+  return data;
+}
+
+export async function updateMemberRole(id: number, role: string) {
+  const { data } = await api.patch<import("@/types/business").TeamMember>(`/team/${id}/`, {
+    role,
+  });
+  return data;
+}
+
+export async function removeMember(id: number) {
+  await api.delete(`/team/${id}/`);
+}
+
+export async function listNotifications(workspaceId?: number) {
+  const { data } = await api.get<import("@/types/business").NotificationsResponse>(
+    "/notifications/",
+    { params: workspaceId ? { workspace: workspaceId } : undefined }
+  );
+  return data;
+}
+
+export async function markNotificationRead(id: number) {
+  const { data } = await api.patch(`/notifications/${id}/`, { is_read: true });
+  return data;
+}
+
+export async function markAllNotificationsRead(workspaceId?: number) {
+  const { data } = await api.post(
+    "/notifications/mark-all-read/",
+    {},
+    { params: workspaceId ? { workspace: workspaceId } : undefined }
+  );
+  return data;
+}

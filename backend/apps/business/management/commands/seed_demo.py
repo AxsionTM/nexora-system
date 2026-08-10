@@ -15,6 +15,7 @@ from apps.business.models import (
     Order,
     OrderItem,
     Expense,
+    Notification,
 )
 
 User = get_user_model()
@@ -207,6 +208,28 @@ class Command(BaseCommand):
                     )
                     expense_count += 1
         self.stdout.write(self.style.SUCCESS(f"Expenses: {expense_count}"))
+
+
+        # Sample notifications
+        Notification.objects.filter(workspace=workspace).delete()
+        sample_notifications = [
+            (Notification.Type.ORDER, "Новый заказ", "Поступил заказ от клиента.", "/orders"),
+            (Notification.Type.PAYMENT, "Оплата получена", "Заказ успешно оплачен.", "/orders"),
+            (Notification.Type.STOCK, "Низкий остаток", "У некоторых товаров заканчивается склад.", "/products"),
+            (Notification.Type.TEAM, "Участник добавлен", "В команду добавлен новый сотрудник.", "/team"),
+            (Notification.Type.REPORT, "Месячный отчёт готов", "Сводка за месяц доступна в аналитике.", "/analytics"),
+        ]
+        for ntype, title, message, link in sample_notifications:
+            Notification.objects.create(
+                workspace=workspace,
+                user=user,
+                type=ntype,
+                title=title,
+                message=message,
+                link=link,
+                is_read=False,
+            )
+        self.stdout.write(self.style.SUCCESS(f"Notifications: {len(sample_notifications)}"))
 
         self.stdout.write(self.style.SUCCESS("Seed complete. Login with:"))
         self.stdout.write(f"  email:    {SEED_EMAIL}")

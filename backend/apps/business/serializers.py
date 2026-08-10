@@ -1,7 +1,7 @@
 from django.utils.text import slugify
 from rest_framework import serializers
 
-from .models import Workspace, WorkspaceMember, Product, Customer, Order, OrderItem, Expense
+from .models import Workspace, WorkspaceMember, Product, Customer, Order, OrderItem, Expense, Notification
 
 
 class WorkspaceSerializer(serializers.ModelSerializer):
@@ -137,3 +137,40 @@ class ExpenseSerializer(serializers.ModelSerializer):
             "amount", "date", "notes", "created_at", "updated_at",
         )
         read_only_fields = ("id", "created_at", "updated_at")
+
+
+
+class WorkspaceMemberSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source="user.email", read_only=True)
+    full_name = serializers.CharField(source="user.full_name", read_only=True)
+    first_name = serializers.CharField(source="user.first_name", read_only=True)
+    last_name = serializers.CharField(source="user.last_name", read_only=True)
+    role_display = serializers.CharField(source="get_role_display", read_only=True)
+
+    class Meta:
+        model = WorkspaceMember
+        fields = (
+            "id", "email", "full_name", "first_name", "last_name",
+            "role", "role_display", "joined_at",
+        )
+        read_only_fields = ("id", "joined_at")
+
+
+class InviteMemberSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    role = serializers.ChoiceField(
+        choices=WorkspaceMember.Role.choices,
+        default=WorkspaceMember.Role.EMPLOYEE,
+    )
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    type_display = serializers.CharField(source="get_type_display", read_only=True)
+
+    class Meta:
+        model = Notification
+        fields = (
+            "id", "type", "type_display", "title", "message",
+            "is_read", "link", "created_at",
+        )
+        read_only_fields = ("id", "created_at")

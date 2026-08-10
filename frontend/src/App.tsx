@@ -16,6 +16,7 @@ import CustomersPage from "@/pages/app/CustomersPage";
 import OrdersPage from "@/pages/app/OrdersPage";
 import AnalyticsPage from "@/pages/app/AnalyticsPage";
 import ExpensesPage from "@/pages/app/ExpensesPage";
+import TeamPage from "@/pages/app/TeamPage";
 import { useAuthStore } from "@/stores/auth";
 
 function AuthBootstrap({ children }: { children: React.ReactNode }) {
@@ -53,15 +54,7 @@ export default function App() {
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/customers" element={<CustomersPage />} />
           <Route path="/expenses" element={<ExpensesPage />} />
-          <Route
-            path="/team"
-            element={
-              <PlaceholderPage
-                title="Команда"
-                description="Участники workspace и роли."
-              />
-            }
-          />
+          <Route path="/team" element={<TeamPage />} />
           <Route
             path="/ai"
             element={

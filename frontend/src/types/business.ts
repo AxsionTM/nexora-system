@@ -104,3 +104,41 @@ export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   taxes: "Налоги",
   other: "Прочее",
 };
+
+export type MemberRole = "owner" | "admin" | "manager" | "employee";
+
+export interface TeamMember {
+  id: number;
+  email: string;
+  full_name: string;
+  first_name: string;
+  last_name: string;
+  role: MemberRole;
+  role_display: string;
+  joined_at: string;
+}
+
+export const ROLE_LABELS: Record<MemberRole, string> = {
+  owner: "Владелец",
+  admin: "Админ",
+  manager: "Менеджер",
+  employee: "Сотрудник",
+};
+
+export type NotificationType = "order" | "payment" | "stock" | "team" | "system" | "report";
+
+export interface AppNotification {
+  id: number;
+  type: NotificationType;
+  type_display: string;
+  title: string;
+  message: string;
+  is_read: boolean;
+  link: string;
+  created_at: string;
+}
+
+export interface NotificationsResponse {
+  unread_count: number;
+  results: AppNotification[];
+}
