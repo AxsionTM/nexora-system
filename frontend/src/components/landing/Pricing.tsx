@@ -6,17 +6,17 @@ import { cn } from "@/lib/utils";
 
 const plans = [
   {
-    name: "Free",
+    name: "Бесплатный",
     price: "$0",
     description: "For getting started and exploring the product.",
     features: [
       "1 workspace",
       "Up to 50 orders / month",
       "Basic analytics",
-      "Demo mode",
+      "Демо-режим",
       "Community support",
     ],
-    cta: "Start free",
+    cta: "Начать бесплатно",
     highlighted: false,
   },
   {
@@ -27,15 +27,15 @@ const plans = [
       "Unlimited orders",
       "Advanced analytics & reports",
       "Team seats (up to 5)",
-      "AI business assistant",
-      "Integrations",
+      "AI-ассистент",
+      "Интеграции",
       "Email support",
     ],
-    cta: "Start free trial",
+    cta: "Начать бесплатно trial",
     highlighted: true,
   },
   {
-    name: "Business",
+    name: "Бизнес",
     price: "$79",
     description: "For teams that need control, roles and scale.",
     features: [
@@ -46,7 +46,7 @@ const plans = [
       "Custom integrations",
       "Audit log",
     ],
-    cta: "Contact sales",
+    cta: "Связаться с нами",
     highlighted: false,
   },
 ];
@@ -56,12 +56,12 @@ export function Pricing() {
     <section id="pricing" className="border-y border-border bg-surface/50 py-20 sm:py-28">
       <div className="container-wide">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-medium text-accent">Pricing</p>
+          <p className="text-sm font-medium text-accent">Тарифы</p>
           <h2 className="mt-2 text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
-            Simple, transparent pricing
+            Простые и прозрачные тарифы
           </h2>
           <p className="mt-4 text-muted">
-            Start free. Upgrade when your business needs more power. No hidden
+            Начать бесплатно. Upgrade when your business needs more power. No hidden
             fees.
           </p>
         </div>
@@ -83,7 +83,7 @@ export function Pricing() {
             >
               {plan.highlighted && (
                 <span className="absolute -top-3 left-6 rounded-full bg-accent px-2.5 py-0.5 text-[11px] font-medium text-accent-foreground">
-                  Most popular
+                  Популярный
                 </span>
               )}
               <div>

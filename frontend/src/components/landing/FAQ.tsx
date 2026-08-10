@@ -14,7 +14,7 @@ const faqs = [
   },
   {
     q: "Can I invite my team?",
-    a: "Yes. Pro and Business plans support team seats with role-based permissions (Owner, Admin, Manager, Employee).",
+    a: "Yes. Pro and Бизнес plans support team seats with role-based permissions (Owner, Admin, Manager, Employee).",
   },
   {
     q: "How does the AI assistant work?",
@@ -26,11 +26,11 @@ const faqs = [
   },
   {
     q: "Can I connect Stripe or Shopify?",
-    a: "Integrations are designed to be extensible. Payment sandbox and connection UI are available; full production connectors can be enabled as you scale.",
+    a: "Интеграции are designed to be extensible. Payment sandbox and connection UI are available; full production connectors can be enabled as you scale.",
   },
 ];
 
-function FAQItem({
+function ВопросыItem({
   question,
   answer,
   open,
@@ -81,15 +81,15 @@ export function FAQ() {
       <div className="container-wide">
         <div className="mx-auto max-w-2xl">
           <div className="text-center">
-            <p className="text-sm font-medium text-accent">FAQ</p>
+            <p className="text-sm font-medium text-accent">Вопросы</p>
             <h2 className="mt-2 text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
-              Common questions
+              Частые вопросы
             </h2>
           </div>
 
           <div className="mt-10">
             {faqs.map((item, i) => (
-              <FAQItem
+              <ВопросыItem
                 key={item.q}
                 question={item.q}
                 answer={item.a}

@@ -13,49 +13,49 @@ import {
 const features = [
   {
     icon: BarChart3,
-    title: "Real-time analytics",
+    title: "Аналитика в реальном времени",
     description:
       "Track revenue, profit, conversion rates and growth with live dashboards that update as your business moves.",
   },
   {
     icon: Package,
-    title: "Product & inventory",
+    title: "Товары и склад",
     description:
       "Manage catalog, stock levels, pricing and categories from a single, clear workspace.",
   },
   {
     icon: Users,
-    title: "Customer insights",
+    title: "Клиентская аналитика",
     description:
       "See order history, lifetime value and engagement patterns to understand who drives your growth.",
   },
   {
     icon: Receipt,
-    title: "Orders & expenses",
+    title: "Заказы и расходы",
     description:
       "Create and track orders, log expenses by category, and always know your true net profit.",
   },
   {
     icon: Shield,
-    title: "Team & roles",
+    title: "Команда и роли",
     description:
       "Invite teammates with role-based access so everyone sees exactly what they need.",
   },
   {
     icon: Bot,
-    title: "AI business assistant",
+    title: "AI-ассистент",
     description:
       "Ask natural questions about performance and get clear, data-backed answers in seconds.",
   },
   {
     icon: Layers,
-    title: "Integrations",
+    title: "Интеграции",
     description:
       "Connect payment processors, storefronts and analytics tools without leaving NEXORA.",
   },
   {
     icon: Zap,
-    title: "Demo mode",
+    title: "Демо-режим",
     description:
       "Explore a fully populated workspace with realistic data before connecting your own business.",
   },
@@ -78,9 +78,9 @@ export function Features() {
     <section id="features" className="py-20 sm:py-28">
       <div className="container-wide">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-medium text-accent">Features</p>
+          <p className="text-sm font-medium text-accent">Возможности</p>
           <h2 className="mt-2 text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
-            Everything you need to run and grow
+            Всё необходимое для работы и роста
           </h2>
           <p className="mt-4 text-muted">
             From day-to-day operations to strategic decisions — one platform

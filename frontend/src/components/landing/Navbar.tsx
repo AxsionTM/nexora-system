@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 const navLinks = [
-  { href: "#features", label: "Features" },
-  { href: "#analytics", label: "Analytics" },
-  { href: "#integrations", label: "Integrations" },
-  { href: "#pricing", label: "Pricing" },
-  { href: "#faq", label: "FAQ" },
+  { href: "#features", label: "Возможности" },
+  { href: "#analytics", label: "Аналитика" },
+  { href: "#integrations", label: "Интеграции" },
+  { href: "#pricing", label: "Тарифы" },
+  { href: "#faq", label: "Вопросы" },
 ];
 
 export function Navbar() {
@@ -40,11 +40,11 @@ export function Navbar() {
           <ThemeToggle />
           <Link to="/login">
             <Button variant="ghost" size="sm">
-              Sign in
+              Войти
             </Button>
           </Link>
           <Link to="/register">
-            <Button size="sm">Start for free</Button>
+            <Button size="sm">Начать бесплатно</Button>
           </Link>
         </div>
 
@@ -82,11 +82,11 @@ export function Navbar() {
                 <div className="ml-auto flex gap-2">
                   <Link to="/login" onClick={() => setOpen(false)}>
                     <Button variant="ghost" size="sm">
-                      Sign in
+                      Войти
                     </Button>
                   </Link>
                   <Link to="/register" onClick={() => setOpen(false)}>
-                    <Button size="sm">Start for free</Button>
+                    <Button size="sm">Начать бесплатно</Button>
                   </Link>
                 </div>
               </div>

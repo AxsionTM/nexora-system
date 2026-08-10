@@ -23,7 +23,7 @@ export function CTA() {
 
           <div className="relative">
             <h2 className="text-balance text-2xl font-semibold tracking-tight sm:text-3xl">
-              Ready to run your business smarter?
+              Готовы управлять бизнесом умнее?
             </h2>
             <p className="mx-auto mt-3 max-w-md text-muted">
               Create a workspace in minutes, or explore the demo to see NEXORA
@@ -32,13 +32,13 @@ export function CTA() {
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link to="/register">
                 <Button size="lg">
-                  Start for free
+                  Начать бесплатно
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
               <Link to="/demo">
                 <Button variant="secondary" size="lg">
-                  Explore demo
+                  Смотреть демо
                 </Button>
               </Link>
             </div>

@@ -5,10 +5,10 @@ const columns = [
   {
     title: "Product",
     links: [
-      { label: "Features", href: "#features" },
+      { label: "Возможности", href: "#features" },
       { label: "Analytics", href: "#analytics" },
-      { label: "Integrations", href: "#integrations" },
-      { label: "Pricing", href: "#pricing" },
+      { label: "Интеграции", href: "#integrations" },
+      { label: "Тарифы", href: "#pricing" },
     ],
   },
   {
@@ -45,7 +45,7 @@ export function Footer() {
           <div className="lg:col-span-2">
             <Logo />
             <p className="mt-3 max-w-xs text-sm text-muted">
-              Business management and analytics for teams that want clarity,
+              Бизнес management and analytics for teams that want clarity,
               not clutter.
             </p>
           </div>
@@ -77,10 +77,10 @@ export function Footer() {
           </p>
           <div className="flex items-center gap-4 text-xs text-muted">
             <Link to="/login" className="hover:text-foreground">
-              Sign in
+              Войти
             </Link>
             <Link to="/register" className="hover:text-foreground">
-              Create account
+              Создать аккаунт
             </Link>
           </div>
         </div>

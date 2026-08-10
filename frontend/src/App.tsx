@@ -1,17 +1,124 @@
-import { Route, Routes } from "react-router-dom";
+import { useEffect } from "react";
+import { Route, Routes, Navigate } from "react-router-dom";
 
 import LandingPage from "@/pages/LandingPage";
 import FoundationStatus from "@/pages/FoundationStatus";
+import LoginPage from "@/pages/auth/LoginPage";
+import RegisterPage from "@/pages/auth/RegisterPage";
+import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "@/pages/auth/ResetPasswordPage";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { AppShell } from "@/components/layout/AppShell";
+import DashboardPage from "@/pages/app/DashboardPage";
+import PlaceholderPage from "@/pages/app/PlaceholderPage";
+import { useAuthStore } from "@/stores/auth";
+
+function AuthBootstrap({ children }: { children: React.ReactNode }) {
+  const loadUser = useAuthStore((s) => s.loadUser);
+
+  useEffect(() => {
+    loadUser();
+  }, [loadUser]);
+
+  return <>{children}</>;
+}
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/status" element={<FoundationStatus />} />
-      {/* Auth and app routes will be added in later commits */}
-      <Route path="/login" element={<LandingPage />} />
-      <Route path="/register" element={<LandingPage />} />
-      <Route path="/demo" element={<LandingPage />} />
-    </Routes>
+    <AuthBootstrap>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/status" element={<FoundationStatus />} />
+
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+        <Route
+          element={
+            <ProtectedRoute>
+              <AppShell />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route
+            path="/analytics"
+            element={
+              <PlaceholderPage
+                title="Аналитика"
+                description="Подробная аналитика продаж, клиентов и прибыли."
+              />
+            }
+          />
+          <Route
+            path="/orders"
+            element={
+              <PlaceholderPage
+                title="Заказы"
+                description="Список заказов, статусы и детали."
+              />
+            }
+          />
+          <Route
+            path="/products"
+            element={
+              <PlaceholderPage
+                title="Товары"
+                description="Каталог товаров, остатки и цены."
+              />
+            }
+          />
+          <Route
+            path="/customers"
+            element={
+              <PlaceholderPage
+                title="Клиенты"
+                description="База клиентов и история покупок."
+              />
+            }
+          />
+          <Route
+            path="/expenses"
+            element={
+              <PlaceholderPage
+                title="Расходы"
+                description="Учёт расходов по категориям."
+              />
+            }
+          />
+          <Route
+            path="/team"
+            element={
+              <PlaceholderPage
+                title="Команда"
+                description="Участники workspace и роли."
+              />
+            }
+          />
+          <Route
+            path="/ai"
+            element={
+              <PlaceholderPage
+                title="AI Ассистент"
+                description="Задавайте вопросы о бизнесе на естественном языке."
+              />
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <PlaceholderPage
+                title="Настройки"
+                description="Профиль, workspace, интеграции и биллинг."
+              />
+            }
+          />
+        </Route>
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AuthBootstrap>
   );
 }

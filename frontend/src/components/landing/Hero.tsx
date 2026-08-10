@@ -24,7 +24,7 @@ export function Hero() {
             transition={{ duration: 0.4 }}
           >
             <Badge variant="accent" className="mb-6">
-              Business management, reimagined
+              Управление бизнесом по-новому
             </Badge>
           </motion.div>
 
@@ -34,7 +34,7 @@ export function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.05 }}
           >
-            Run your business smarter.
+            Управляйте бизнесом умнее.
           </motion.h1>
 
           <motion.p
@@ -43,8 +43,8 @@ export function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.1 }}
           >
-            One powerful workspace for your sales, customers, analytics and
-            growth.
+            Одно мощное рабочее пространство для продаж, клиентов, аналитики и
+            роста.
           </motion.p>
 
           <motion.div
@@ -55,14 +55,14 @@ export function Hero() {
           >
             <Link to="/register">
               <Button size="lg" className="min-w-[160px]">
-                Start for free
+                Начать бесплатно
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
             <Link to="/demo">
               <Button variant="secondary" size="lg" className="min-w-[160px]">
                 <Play className="h-3.5 w-3.5" />
-                Explore demo
+                Смотреть демо
               </Button>
             </Link>
           </motion.div>
@@ -73,7 +73,7 @@ export function Hero() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.25 }}
           >
-            No credit card required · Free 14-day trial · Cancel anytime
+            Без карты · Бесплатный пробный период 14 дней · Отмена в любой момент
           </motion.p>
         </div>
 

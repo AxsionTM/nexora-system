@@ -14,7 +14,7 @@ export function Integrations() {
     <section id="integrations" className="py-20 sm:py-28">
       <div className="container-wide">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-medium text-accent">Integrations</p>
+          <p className="text-sm font-medium text-accent">Интеграции</p>
           <h2 className="mt-2 text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
             Connect the tools you already use
           </h2>

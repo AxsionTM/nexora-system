@@ -15,7 +15,7 @@ const testimonials = [
   },
   {
     quote:
-      "Demo mode let my team explore the product with real-looking data before we migrated. Onboarding was painless.",
+      "Демо-режим let my team explore the product with real-looking data before we migrated. Onboarding was painless.",
     name: "Elena Ruiz",
     role: "Ops Lead, Bright Form",
   },

@@ -99,7 +99,7 @@ export function DashboardPreview() {
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted">Overview</p>
-                <p className="text-sm font-medium">Business Dashboard</p>
+                <p className="text-sm font-medium">Бизнес Dashboard</p>
               </div>
               <div className="flex gap-1">
                 {["7D", "30D", "3M", "1Y"].map((p, i) => (
