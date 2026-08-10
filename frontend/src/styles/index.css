@@ -2,24 +2,92 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: 222 20% 97%;
-  --surface: 0 0% 100%;
-  --border: 220 14% 90%;
-  --foreground: 222 20% 10%;
-  --muted: 220 9% 46%;
-  --accent: 217 91% 60%;
+@layer base {
+  :root {
+    --background: 220 20% 97%;
+    --surface: 0 0% 100%;
+    --surface-elevated: 0 0% 100%;
+    --border: 220 14% 90%;
+    --border-strong: 220 13% 84%;
+    --foreground: 222 25% 10%;
+    --muted: 220 10% 46%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 217 91% 55%;
+    --accent-foreground: 0 0% 100%;
+    --accent-muted: 217 91% 95%;
+    --success: 152 60% 40%;
+    --warning: 38 92% 50%;
+    --danger: 0 72% 51%;
+    --ring: 217 91% 55%;
+    --radius: 0.625rem;
+    --sidebar: 220 20% 98%;
+    --chart-1: 217 91% 55%;
+    --chart-2: 152 60% 40%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 280 65% 55%;
+    --chart-5: 340 70% 55%;
+  }
+
+  .dark {
+    --background: 222 30% 6%;
+    --surface: 222 28% 9%;
+    --surface-elevated: 222 25% 12%;
+    --border: 222 18% 16%;
+    --border-strong: 222 16% 22%;
+    --foreground: 210 20% 98%;
+    --muted: 220 10% 55%;
+    --muted-foreground: 220 10% 60%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 100%;
+    --accent-muted: 217 40% 16%;
+    --success: 152 55% 45%;
+    --warning: 38 90% 55%;
+    --danger: 0 70% 55%;
+    --ring: 217 91% 60%;
+    --sidebar: 222 28% 8%;
+    --chart-1: 217 91% 60%;
+    --chart-2: 152 55% 45%;
+    --chart-3: 38 90% 55%;
+    --chart-4: 280 60% 60%;
+    --chart-5: 340 65% 58%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  ::selection {
+    @apply bg-accent/20 text-foreground;
+  }
 }
 
-.dark {
-  --background: 222 30% 7%;
-  --surface: 222 25% 10%;
-  --border: 222 18% 18%;
-  --foreground: 0 0% 98%;
-  --muted: 220 10% 65%;
-  --accent: 217 91% 60%;
-}
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
 
-body {
-  @apply bg-background text-foreground antialiased;
+  .container-narrow {
+    @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .container-wide {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-foreground to-muted bg-clip-text text-transparent;
+  }
+
+  .glass {
+    @apply border border-border/60 bg-surface/80 backdrop-blur-xl;
+  }
 }
