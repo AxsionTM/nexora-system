@@ -15,49 +15,49 @@ const features = [
     icon: BarChart3,
     title: "Аналитика в реальном времени",
     description:
-      "Track revenue, profit, conversion rates and growth with live dashboards that update as your business moves.",
+      "Отслеживайте выручку, прибыль, конверсию и рост с живыми дашбордами, которые обновляются по мере работы бизнеса.",
   },
   {
     icon: Package,
     title: "Товары и склад",
     description:
-      "Manage catalog, stock levels, pricing and categories from a single, clear workspace.",
+      "Управляйте каталогом, остатками, ценами и категориями из одного понятного workspace.",
   },
   {
     icon: Users,
     title: "Клиентская аналитика",
     description:
-      "See order history, lifetime value and engagement patterns to understand who drives your growth.",
+      "Смотрите историю заказов, LTV и паттерны вовлечённости, чтобы понимать, кто двигает рост.",
   },
   {
     icon: Receipt,
     title: "Заказы и расходы",
     description:
-      "Create and track orders, log expenses by category, and always know your true net profit.",
+      "Создавайте и отслеживайте заказы, фиксируйте расходы по категориям и всегда знайте чистую прибыль.",
   },
   {
     icon: Shield,
     title: "Команда и роли",
     description:
-      "Invite teammates with role-based access so everyone sees exactly what they need.",
+      "Приглашайте коллег с ролевым доступом — каждый видит только то, что нужно.",
   },
   {
     icon: Bot,
     title: "AI-ассистент",
     description:
-      "Ask natural questions about performance and get clear, data-backed answers in seconds.",
+      "Задавайте вопросы о показателях на естественном языке и получайте понятные ответы на основе данных.",
   },
   {
     icon: Layers,
     title: "Интеграции",
     description:
-      "Connect payment processors, storefronts and analytics tools without leaving NEXORA.",
+      "Подключайте платёжные системы, витрины и аналитику, не покидая NEXORA.",
   },
   {
     icon: Zap,
     title: "Демо-режим",
     description:
-      "Explore a fully populated workspace with realistic data before connecting your own business.",
+      "Изучите полностью заполненный workspace с реалистичными данными до подключения своего бизнеса.",
   },
 ];
 
@@ -83,8 +83,8 @@ export function Features() {
             Всё необходимое для работы и роста
           </h2>
           <p className="mt-4 text-muted">
-            From day-to-day operations to strategic decisions — one platform
-            designed for small and growing businesses.
+            От ежедневных операций до стратегических решений — одна платформа
+            для малого и растущего бизнеса.
           </p>
         </div>
 

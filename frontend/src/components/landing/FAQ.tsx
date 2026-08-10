@@ -5,32 +5,32 @@ import { cn } from "@/lib/utils";
 
 const faqs = [
   {
-    q: "Is NEXORA free to try?",
-    a: "Yes. You can create an account and use the free plan, or explore the fully populated Demo Workspace without signing up for a paid plan.",
+    q: "Можно ли попробовать NEXORA бесплатно?",
+    a: "Да. Вы можете создать аккаунт и пользоваться бесплатным тарифом или изучить полностью заполненный демо-workspace без оплаты.",
   },
   {
-    q: "Do I need a real business to use Demo Mode?",
-    a: "No. Demo Mode generates realistic sample data — customers, orders, products and expenses — so you can evaluate the product before connecting your own operations.",
+    q: "Нужен ли реальный бизнес для Демо-режима?",
+    a: "Нет. Демо-режим генерирует реалистичные тестовые данные — клиентов, заказы, товары и расходы — чтобы вы могли оценить продукт до подключения своего бизнеса.",
   },
   {
-    q: "Can I invite my team?",
-    a: "Yes. Pro and Бизнес plans support team seats with role-based permissions (Owner, Admin, Manager, Employee).",
+    q: "Можно ли пригласить команду?",
+    a: "Да. Тарифы Pro и Бизнес поддерживают места для команды с ролевыми правами (Владелец, Админ, Менеджер, Сотрудник).",
   },
   {
-    q: "How does the AI assistant work?",
-    a: "The AI assistant receives a carefully scoped snapshot of your business metrics (revenue, expenses, top products, trends) and answers questions in plain language. Your API keys stay on the server.",
+    q: "Как работает AI-ассистент?",
+    a: "AI-ассистент получает безопасный срез метрик вашего бизнеса (выручка, расходы, топ-товары, тренды) и отвечает на вопросы простым языком. API-ключи хранятся только на сервере.",
   },
   {
-    q: "Will my data stay private?",
-    a: "Workspaces are isolated. Only members you invite can access your data. We do not use your business data to train models.",
+    q: "Данные останутся конфиденциальными?",
+    a: "Workspace'ы изолированы. Доступ есть только у участников, которых вы пригласили. Мы не используем ваши бизнес-данные для обучения моделей.",
   },
   {
-    q: "Can I connect Stripe or Shopify?",
-    a: "Интеграции are designed to be extensible. Payment sandbox and connection UI are available; full production connectors can be enabled as you scale.",
+    q: "Можно ли подключить Stripe или Shopify?",
+    a: "Интеграции спроектированы расширяемыми. Есть payment sandbox и UI подключения; полноценные production-коннекторы можно включить по мере роста.",
   },
 ];
 
-function ВопросыItem({
+function FAQItem({
   question,
   answer,
   open,
@@ -89,7 +89,7 @@ export function FAQ() {
 
           <div className="mt-10">
             {faqs.map((item, i) => (
-              <ВопросыItem
+              <FAQItem
                 key={item.q}
                 question={item.q}
                 answer={item.a}

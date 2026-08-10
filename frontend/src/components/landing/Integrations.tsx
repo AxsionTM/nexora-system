@@ -1,12 +1,12 @@
 import { motion } from "framer-motion";
 
 const integrations = [
-  { name: "Stripe", category: "Payments" },
-  { name: "Shopify", category: "Commerce" },
-  { name: "PayPal", category: "Payments" },
-  { name: "WooCommerce", category: "Commerce" },
-  { name: "Google Analytics", category: "Analytics" },
-  { name: "Slack", category: "Notifications" },
+  { name: "Stripe", category: "Платежи" },
+  { name: "Shopify", category: "Коммерция" },
+  { name: "PayPal", category: "Платежи" },
+  { name: "WooCommerce", category: "Коммерция" },
+  { name: "Google Analytics", category: "Аналитика" },
+  { name: "Slack", category: "Уведомления" },
 ];
 
 export function Integrations() {
@@ -16,11 +16,11 @@ export function Integrations() {
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-medium text-accent">Интеграции</p>
           <h2 className="mt-2 text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
-            Connect the tools you already use
+            Подключайте привычные инструменты
           </h2>
           <p className="mt-4 text-muted">
-            Sync payments, storefronts and analytics into one place. Built with
-            an extensible architecture so new providers can be added cleanly.
+            Синхронизируйте платежи, витрины и аналитику в одном месте.
+            Архитектура расширяемая — новые провайдеры добавляются чисто.
           </p>
         </div>
 

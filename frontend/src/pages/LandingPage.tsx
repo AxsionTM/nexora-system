@@ -13,7 +13,6 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-
       <main>
         <Hero />
         <Features />
@@ -24,7 +23,6 @@ export default function LandingPage() {
         <FAQ />
         <CTA />
       </main>
-
       <Footer />
     </div>
   );

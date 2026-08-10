@@ -8,13 +8,13 @@ const plans = [
   {
     name: "Бесплатный",
     price: "$0",
-    description: "For getting started and exploring the product.",
+    description: "Для знакомства с продуктом и первых шагов.",
     features: [
       "1 workspace",
-      "Up to 50 orders / month",
-      "Basic analytics",
+      "До 50 заказов в месяц",
+      "Базовая аналитика",
       "Демо-режим",
-      "Community support",
+      "Поддержка сообщества",
     ],
     cta: "Начать бесплатно",
     highlighted: false,
@@ -22,29 +22,29 @@ const plans = [
   {
     name: "Pro",
     price: "$29",
-    description: "For growing businesses that need full visibility.",
+    description: "Для растущего бизнеса, которому нужна полная картина.",
     features: [
-      "Unlimited orders",
-      "Advanced analytics & reports",
-      "Team seats (up to 5)",
+      "Безлимитные заказы",
+      "Расширенная аналитика и отчёты",
+      "Места в команде (до 5)",
       "AI-ассистент",
       "Интеграции",
-      "Email support",
+      "Email-поддержка",
     ],
-    cta: "Начать бесплатно trial",
+    cta: "Начать пробный период",
     highlighted: true,
   },
   {
     name: "Бизнес",
     price: "$79",
-    description: "For teams that need control, roles and scale.",
+    description: "Для команд, которым нужны контроль, роли и масштаб.",
     features: [
-      "Everything in Pro",
-      "Unlimited team seats",
-      "Role-based permissions",
-      "Priority support",
-      "Custom integrations",
-      "Audit log",
+      "Всё из Pro",
+      "Безлимитные места в команде",
+      "Ролевые права доступа",
+      "Приоритетная поддержка",
+      "Кастомные интеграции",
+      "Журнал аудита",
     ],
     cta: "Связаться с нами",
     highlighted: false,
@@ -61,8 +61,8 @@ export function Pricing() {
             Простые и прозрачные тарифы
           </h2>
           <p className="mt-4 text-muted">
-            Начать бесплатно. Upgrade when your business needs more power. No hidden
-            fees.
+            Начните бесплатно. Переходите на платный план, когда бизнесу нужно
+            больше возможностей. Без скрытых платежей.
           </p>
         </div>
 
@@ -93,7 +93,7 @@ export function Pricing() {
                     {plan.price}
                   </span>
                   {plan.price !== "$0" && (
-                    <span className="text-sm text-muted">/month</span>
+                    <span className="text-sm text-muted">/мес</span>
                   )}
                 </div>
                 <p className="mt-2 text-sm text-muted">{plan.description}</p>

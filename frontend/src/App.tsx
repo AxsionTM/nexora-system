@@ -11,6 +11,9 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppShell } from "@/components/layout/AppShell";
 import DashboardPage from "@/pages/app/DashboardPage";
 import PlaceholderPage from "@/pages/app/PlaceholderPage";
+import ProductsPage from "@/pages/app/ProductsPage";
+import CustomersPage from "@/pages/app/CustomersPage";
+import OrdersPage from "@/pages/app/OrdersPage";
 import { useAuthStore } from "@/stores/auth";
 
 function AuthBootstrap({ children }: { children: React.ReactNode }) {
@@ -52,33 +55,9 @@ export default function App() {
               />
             }
           />
-          <Route
-            path="/orders"
-            element={
-              <PlaceholderPage
-                title="Заказы"
-                description="Список заказов, статусы и детали."
-              />
-            }
-          />
-          <Route
-            path="/products"
-            element={
-              <PlaceholderPage
-                title="Товары"
-                description="Каталог товаров, остатки и цены."
-              />
-            }
-          />
-          <Route
-            path="/customers"
-            element={
-              <PlaceholderPage
-                title="Клиенты"
-                description="База клиентов и история покупок."
-              />
-            }
-          />
+          <Route path="/orders" element={<OrdersPage />} />
+          <Route path="/products" element={<ProductsPage />} />
+          <Route path="/customers" element={<CustomersPage />} />
           <Route
             path="/expenses"
             element={
