@@ -180,7 +180,27 @@ class OrderSerializer(serializers.ModelSerializer):
                 )
             order.recalculate_total()
             return order
-        return self._apply_items(order, items_data)
+        order = self._apply_items(order, items_data)
+        try:
+            from .notify import notify_event
+            from .models import Notification
+            notify_event(
+                order.workspace,
+                title="Новый заказ",
+                message=f"Заказ #{order.id} на сумму ${order.total}",
+                event="order.created",
+                extra={"order_id": order.id, "total": str(order.total)},
+            )
+            Notification.objects.create(
+                workspace=order.workspace,
+                type="order",
+                title="Новый заказ",
+                message=f"Заказ #{order.id} на сумму ${order.total}",
+                link="/orders",
+            )
+        except Exception:
+            pass
+        return order
 
     def update(self, instance, validated_data):
         items_data = validated_data.pop("items", None)

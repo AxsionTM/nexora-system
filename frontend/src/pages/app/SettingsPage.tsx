@@ -159,23 +159,6 @@ function BillingPanel() {
     },
   });
 
-  const topUp = useMutation({
-    mutationFn: (amount: number) => authApi.createTopUp(amount),
-    onSuccess: (res) => {
-      if (res.checkout_url) {
-        window.location.href = res.checkout_url;
-      } else {
-        setMsg(res.message || "Ссылка на оплату получена");
-      }
-    },
-    onError: (e: unknown) => {
-      const detail =
-        (e as { response?: { data?: { detail?: string } } })?.response?.data
-          ?.detail || "Не удалось создать платёж. Проверьте настройки ЮKassa.";
-      setErr(String(detail));
-    },
-  });
-
   if (isLoading) return <p className="text-sm text-muted">Загрузка...</p>;
   if (!data)
     return <p className="text-sm text-danger">Не удалось загрузить кошелёк</p>;
@@ -194,21 +177,8 @@ function BillingPanel() {
             <p className="mt-2 text-3xl font-semibold tracking-tight">
               ${Number(data.balance).toLocaleString()}
             </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {[10, 29, 50, 100].map((a) => (
-                <Button
-                  key={a}
-                  size="sm"
-                  variant="secondary"
-                  disabled={topUp.isPending}
-                  onClick={() => topUp.mutate(a)}
-                >
-                  +${a}
-                </Button>
-              ))}
-            </div>
             <p className="mt-2 text-xs text-muted">
-              Пополнение картой через ЮKassa (TEST/LIVE из .env)
+              Пополнение баланса выполняет администратор через /admin
             </p>
           </div>
           <div className="text-right">
@@ -540,13 +510,30 @@ export default function SettingsPage() {
     },
   });
 
+  const [connectProvider, setConnectProvider] = useState<string | null>(null);
+  const [connectConfig, setConnectConfig] = useState<Record<string, string>>({});
+  const [connectError, setConnectError] = useState("");
+
   const connectM = useMutation({
-    mutationFn: (provider: string) =>
-      api.connectIntegration(provider, workspace?.id),
+    mutationFn: ({ provider, config }: { provider: string; config: Record<string, string> }) =>
+      api.connectIntegration(provider, workspace?.id, config),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["integrations"] });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      setConnectProvider(null);
+      setConnectConfig({});
+      setConnectError("");
     },
+    onError: (e: unknown) => {
+      const detail =
+        (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
+        "Не удалось подключить";
+      setConnectError(String(detail));
+    },
+  });
+
+  const testM = useMutation({
+    mutationFn: (provider: string) => api.testIntegration(provider, workspace?.id),
   });
 
   const disconnectM = useMutation({
@@ -778,14 +765,36 @@ export default function SettingsPage() {
                             Подключено
                           </Badge>
                         </div>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => disconnectM.mutate(i.provider)}
-                          disabled={disconnectM.isPending}
-                        >
-                          Отключить
-                        </Button>
+                        <div className="flex flex-col gap-1">
+                          {["telegram", "email", "webhook", "slack"].includes(i.provider) && (
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => testM.mutate(i.provider)}
+                              disabled={testM.isPending}
+                            >
+                              Тест
+                            </Button>
+                          )}
+                          {i.provider === "csv_export" && (
+                            <a
+                              className="text-xs text-accent hover:underline"
+                              href={api.csvExportUrl("orders", workspace?.id)}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              Скачать CSV
+                            </a>
+                          )}
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => disconnectM.mutate(i.provider)}
+                            disabled={disconnectM.isPending}
+                          >
+                            Отключить
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -811,7 +820,7 @@ export default function SettingsPage() {
                       </div>
                       <Button
                         size="sm"
-                        onClick={() => connectM.mutate(i.provider)}
+                        onClick={() => { setConnectProvider(i.provider); setConnectConfig({}); setConnectError(""); }}
                         disabled={connectM.isPending}
                       >
                         Подключить
@@ -822,6 +831,122 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
+
+
+      {connectProvider && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-elevated">
+            <h3 className="text-sm font-semibold">
+              Подключение: {connectProvider}
+            </h3>
+            <p className="mt-1 text-xs text-muted">
+              Токен бота и SMTP задаются в .env на сервере. Здесь — куда слать уведомления.
+            </p>
+            <div className="mt-4 space-y-3">
+              {connectProvider === "telegram" && (
+                <Input
+                  label="Telegram chat_id"
+                  placeholder="Например 123456789"
+                  value={connectConfig.chat_id || ""}
+                  onChange={(e) =>
+                    setConnectConfig((c) => ({ ...c, chat_id: e.target.value }))
+                  }
+                />
+              )}
+              {connectProvider === "email" && (
+                <Input
+                  label="Email для уведомлений"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={connectConfig.to_email || ""}
+                  onChange={(e) =>
+                    setConnectConfig((c) => ({ ...c, to_email: e.target.value }))
+                  }
+                />
+              )}
+              {connectProvider === "webhook" && (
+                <>
+                  <Input
+                    label="Webhook URL"
+                    placeholder="https://..."
+                    value={connectConfig.url || ""}
+                    onChange={(e) =>
+                      setConnectConfig((c) => ({ ...c, url: e.target.value }))
+                    }
+                  />
+                  <Input
+                    label="Секрет (опционально)"
+                    value={connectConfig.secret || ""}
+                    onChange={(e) =>
+                      setConnectConfig((c) => ({ ...c, secret: e.target.value }))
+                    }
+                  />
+                </>
+              )}
+              {connectProvider === "slack" && (
+                <Input
+                  label="Slack Incoming Webhook URL"
+                  placeholder="https://hooks.slack.com/..."
+                  value={connectConfig.webhook_url || ""}
+                  onChange={(e) =>
+                    setConnectConfig((c) => ({
+                      ...c,
+                      webhook_url: e.target.value,
+                    }))
+                  }
+                />
+              )}
+              {connectProvider === "csv_export" && (
+                <p className="text-sm text-muted">
+                  CSV-экспорт не требует доп. настроек. После подключения появится ссылка на скачивание.
+                </p>
+              )}
+              {connectProvider === "google_sheets" && (
+                <p className="text-sm text-muted">
+                  Для Google Sheets позже: service account JSON в .env. Пока можно подключить как метку.
+                </p>
+              )}
+              {connectProvider === "google_analytics" && (
+                <Input
+                  label="GA4 Measurement ID (G-XXXX)"
+                  value={connectConfig.measurement_id || ""}
+                  onChange={(e) =>
+                    setConnectConfig((c) => ({
+                      ...c,
+                      measurement_id: e.target.value,
+                    }))
+                  }
+                />
+              )}
+              {connectError && (
+                <p className="text-sm text-danger">{connectError}</p>
+              )}
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setConnectProvider(null);
+                  setConnectError("");
+                }}
+              >
+                Отмена
+              </Button>
+              <Button
+                disabled={connectM.isPending}
+                onClick={() =>
+                  connectM.mutate({
+                    provider: connectProvider,
+                    config: connectConfig,
+                  })
+                }
+              >
+                {connectM.isPending ? "Подключение..." : "Подключить"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
           {tab === "billing" && (
             <div className="space-y-6">

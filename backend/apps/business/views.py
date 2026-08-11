@@ -597,6 +597,8 @@ class IntegrationListView(CurrentWorkspaceMixin, APIView):
         }
         result = []
         for value, label in Integration.Provider.choices:
+            if value == "discord":
+                continue
             meta = INTEGRATION_META.get(value, {})
             if value in existing:
                 data = IntegrationSerializer(existing[value]).data
@@ -623,14 +625,66 @@ class IntegrationConnectView(CurrentWorkspaceMixin, APIView):
         from .models import Integration, Notification
         from .serializers import IntegrationSerializer
         from django.utils import timezone
+        from django.conf import settings as dj_settings
 
         workspace = self.get_workspace()
         if not workspace:
             return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
 
+        # Discord skipped by product decision
+        if provider == "discord":
+            return Response(
+                {"detail": "Discord не поддерживается в этой версии."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         valid = {c[0] for c in Integration.Provider.choices}
         if provider not in valid:
             return Response({"detail": "Unknown provider"}, status=status.HTTP_400_BAD_REQUEST)
+
+        config = request.data.get("config") or {}
+        if not isinstance(config, dict):
+            config = {}
+
+        # Required fields per provider
+        if provider == Integration.Provider.TELEGRAM:
+            if not (config.get("chat_id") or "").strip():
+                return Response(
+                    {"detail": "Укажите chat_id Telegram (куда слать уведомления)."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if not getattr(dj_settings, "TELEGRAM_BOT_TOKEN", ""):
+                return Response(
+                    {"detail": "TELEGRAM_BOT_TOKEN не задан в .env сервера."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        if provider == Integration.Provider.EMAIL:
+            if not (config.get("to_email") or config.get("email") or "").strip():
+                return Response(
+                    {"detail": "Укажите email для уведомлений (to_email)."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if not getattr(dj_settings, "EMAIL_HOST", ""):
+                return Response(
+                    {"detail": "SMTP не настроен (EMAIL_HOST в .env)."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        if provider == Integration.Provider.WEBHOOK:
+            if not (config.get("url") or "").strip():
+                return Response(
+                    {"detail": "Укажите URL webhook."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        if provider == Integration.Provider.SLACK:
+            if not (config.get("webhook_url") or "").strip():
+                return Response(
+                    {"detail": "Укажите Slack Incoming Webhook URL."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        # Never store bot tokens in config — only workspace targets
+        safe_config = {k: v for k, v in config.items() if k not in ("bot_token", "password", "api_key")}
+        safe_config["connected_by"] = request.user.email
 
         integration, _ = Integration.objects.get_or_create(
             workspace=workspace,
@@ -638,7 +692,7 @@ class IntegrationConnectView(CurrentWorkspaceMixin, APIView):
         )
         integration.status = Integration.Status.CONNECTED
         integration.connected_at = timezone.now()
-        integration.config = {"mode": "sandbox", "connected_by": request.user.email}
+        integration.config = safe_config
         integration.save()
 
         Notification.objects.create(
@@ -646,10 +700,12 @@ class IntegrationConnectView(CurrentWorkspaceMixin, APIView):
             user=request.user,
             type=Notification.Type.SYSTEM,
             title=f"Интеграция {integration.get_provider_display()} подключена",
-            message="Режим DEMO / TEST — реальные платежи не выполняются.",
+            message="Канал готов к отправке уведомлений.",
             link="/settings",
         )
-        return Response(IntegrationSerializer(integration).data)
+        data = IntegrationSerializer(integration).data
+        # do not expose full secrets
+        return Response(data)
 
 
 class IntegrationDisconnectView(CurrentWorkspaceMixin, APIView):
@@ -925,3 +981,86 @@ class AIConversationDetailView(CurrentWorkspaceMixin, APIView):
         if not conv:
             return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
         return Response(AIConversationSerializer(conv).data)
+
+
+
+class IntegrationTestView(CurrentWorkspaceMixin, APIView):
+    """Send a test notification to a connected channel."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, provider: str):
+        from .notify import notify_event, send_telegram, send_email, send_webhook, send_slack
+        from .models import Integration
+
+        workspace = self.get_workspace()
+        if not workspace:
+            return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        title = "NEXORA: тестовое уведомление"
+        message = f"Проверка канала «{provider}» для workspace «{workspace.name}»."
+        ok = False
+        if provider == "telegram":
+            ok = send_telegram(workspace, f"{title}\n{message}")
+        elif provider == "email":
+            ok = send_email(workspace, title, message)
+        elif provider == "webhook":
+            ok = send_webhook(workspace, {"event": "test", "title": title, "message": message})
+        elif provider == "slack":
+            ok = send_slack(workspace, f"{title}\n{message}")
+        elif provider == "csv_export":
+            ok = True
+        else:
+            return Response({"detail": "Тест для этого канала не поддерживается"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not ok:
+            return Response(
+                {"detail": "Не удалось отправить. Проверьте настройки канала и .env."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response({"ok": True, "message": "Тестовое уведомление отправлено"})
+
+
+class CsvExportView(CurrentWorkspaceMixin, APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        import csv
+        import io
+        from django.http import HttpResponse
+        from .models import Product, Order, Customer
+
+        workspace = self.get_workspace()
+        if not workspace:
+            return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        kind = request.query_params.get("type", "orders")
+        buffer = io.StringIO()
+        writer = csv.writer(buffer)
+
+        if kind == "products":
+            writer.writerow(["id", "name", "sku", "price", "cost", "stock", "is_active"])
+            for p in Product.objects.filter(workspace=workspace):
+                writer.writerow([p.id, p.name, p.sku, p.price, p.cost, p.stock, p.is_active])
+            filename = "products.csv"
+        elif kind == "customers":
+            writer.writerow(["id", "name", "email", "phone", "company"])
+            for c in Customer.objects.filter(workspace=workspace):
+                writer.writerow([c.id, c.name, c.email, c.phone, c.company])
+            filename = "customers.csv"
+        else:
+            writer.writerow(["id", "customer", "status", "payment_status", "total", "created_at"])
+            for o in Order.objects.filter(workspace=workspace).select_related("customer"):
+                writer.writerow([
+                    o.id,
+                    o.customer.name if o.customer else "",
+                    o.status,
+                    o.payment_status,
+                    o.total,
+                    o.created_at.isoformat(),
+                ])
+            filename = "orders.csv"
+
+        resp = HttpResponse(buffer.getvalue().encode("utf-8-sig"), content_type="text/csv; charset=utf-8")
+        resp["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return resp

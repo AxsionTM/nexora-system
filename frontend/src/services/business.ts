@@ -187,13 +187,33 @@ export async function listIntegrations(workspaceId?: number) {
   return data;
 }
 
-export async function connectIntegration(provider: string, workspaceId?: number) {
+export async function connectIntegration(
+  provider: string,
+  workspaceId?: number,
+  config?: Record<string, string>
+) {
   const { data } = await api.post<import("@/types/business").Integration>(
     `/integrations/${provider}/connect/`,
+    { config: config || {} },
+    { params: workspaceId ? { workspace: workspaceId } : undefined }
+  );
+  return data;
+}
+
+export async function testIntegration(provider: string, workspaceId?: number) {
+  const { data } = await api.post(
+    `/integrations/${provider}/test/`,
     {},
     { params: workspaceId ? { workspace: workspaceId } : undefined }
   );
   return data;
+}
+
+export function csvExportUrl(type: "orders" | "products" | "customers", workspaceId?: number) {
+  const base = import.meta.env.VITE_API_BASE_URL || "/api";
+  const q = new URLSearchParams({ type });
+  if (workspaceId) q.set("workspace", String(workspaceId));
+  return `${base}/export/csv/?${q.toString()}`;
 }
 
 export async function disconnectIntegration(provider: string, workspaceId?: number) {
