@@ -24,17 +24,14 @@
 ---
 
 <p align="center">
-  <img src="https://avatars.githubusercontent.com/u/146373364?v=4" width="120" style="border-radius:50%">
+<img src="https://avatars.githubusercontent.com/u/146373364?v=4" width="120" style="border-radius:50%">
 </p>
 <h2 align="center">👨‍💻 Maxsim (Axsion)</h2>
 <p align="center">
-  <img src="https://img.shields.io/badge/Age-17-blue?style=for-the-badge">
-  <a href="https://github.com/AxsionTM">
-    <img src="https://img.shields.io/badge/GitHub-AxsionTM-black?style=for-the-badge&logo=github">
-  </a>
-  <a href="https://t.me/AxsionTM">
-    <img src="https://img.shields.io/badge/Telegram-AxsionTM-2CA5E0?style=for-the-badge&logo=telegram">
-  </a>
+<img src="https://img.shields.io/badge/Age-17-blue?style=for-the-badge">
+<a href="https://github.com/AxsionTM">
+<img src="https://img.shields.io/badge/GitHub-Axsion-black?style=for-the-badge&logo=github">
+</a>
 </p>
 
 ---
