@@ -42,43 +42,63 @@
 
 Цель — дать предпринимателю «пульт управления» компанией: видеть выручку и прибыль, контролировать склад, работать с клиентами и получать ответы от нейросети по живым данным бизнеса.
 
+### Языки программирования
+
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white">
-  <img src="https://img.shields.io/badge/Django-5-092E20?style=for-the-badge&logo=django&logoColor=white">
-  <img src="https://img.shields.io/badge/Django%20REST%20Framework-API-red?style=for-the-badge&logo=django&logoColor=white">
-  <img src="https://img.shields.io/badge/SimpleJWT-Auth-black?style=for-the-badge">
-  <img src="https://img.shields.io/badge/PostgreSQL-15-4169E1?style=for-the-badge&logo=postgresql&logoColor=white">
-  <img src="https://img.shields.io/badge/SQLite-Dev-003B57?style=for-the-badge&logo=sqlite&logoColor=white">
-  <img src="https://img.shields.io/badge/SQL-Queries-CC2927?style=for-the-badge&logo=mysql&logoColor=white">
-</p>
-<p align="center">
-  <img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black">
   <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white">
-  <img src="https://img.shields.io/badge/Vite-5-646CFF?style=for-the-badge&logo=vite&logoColor=white">
+  <img src="https://img.shields.io/badge/JavaScript-ES6-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black">
+  <img src="https://img.shields.io/badge/SQL-Queries-CC2927?style=for-the-badge&logo=mysql&logoColor=white">
   <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white">
   <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white">
-  <img src="https://img.shields.io/badge/Tailwind%20CSS-38B2AC?style=for-the-badge&logo=tailwindcss&logoColor=white">
-  <img src="https://img.shields.io/badge/JavaScript-ES6-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black">
 </p>
+
+### Backend & API
+
 <p align="center">
+  <img src="https://img.shields.io/badge/Django-5-092E20?style=for-the-badge&logo=django&logoColor=white">
+  <img src="https://img.shields.io/badge/Django%20REST%20Framework-API-red?style=for-the-badge&logo=django&logoColor=white">
+  <img src="https://img.shields.io/badge/REST%20API-02569B?style=for-the-badge&logo=fastapi&logoColor=white">
+  <img src="https://img.shields.io/badge/SimpleJWT-Auth-black?style=for-the-badge">
+  <img src="https://img.shields.io/badge/JSON-000000?style=for-the-badge&logo=json&logoColor=white">
+  <img src="https://img.shields.io/badge/Webhooks-Integrations-6C63FF?style=for-the-badge">
+</p>
+
+### Базы данных
+
+<p align="center">
+  <img src="https://img.shields.io/badge/PostgreSQL-15-4169E1?style=for-the-badge&logo=postgresql&logoColor=white">
+  <img src="https://img.shields.io/badge/SQLite-Dev-003B57?style=for-the-badge&logo=sqlite&logoColor=white">
+</p>
+
+### Frontend
+
+<p align="center">
+  <img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black">
+  <img src="https://img.shields.io/badge/Vite-5-646CFF?style=for-the-badge&logo=vite&logoColor=white">
+  <img src="https://img.shields.io/badge/Tailwind%20CSS-38B2AC?style=for-the-badge&logo=tailwindcss&logoColor=white">
+  <img src="https://img.shields.io/badge/React%20Router-CA4245?style=for-the-badge&logo=reactrouter&logoColor=white">
   <img src="https://img.shields.io/badge/TanStack%20Query-FF4154?style=for-the-badge&logo=reactquery&logoColor=white">
   <img src="https://img.shields.io/badge/Zustand-State-433E38?style=for-the-badge">
-  <img src="https://img.shields.io/badge/React%20Router-CA4245?style=for-the-badge&logo=reactrouter&logoColor=white">
-  <img src="https://img.shields.io/badge/Recharts-Charts-8884d8?style=for-the-badge">
-  <img src="https://img.shields.io/badge/Framer%20Motion-Motion-0055FF?style=for-the-badge&logo=framer&logoColor=white">
   <img src="https://img.shields.io/badge/React%20Hook%20Form-EC5990?style=for-the-badge">
   <img src="https://img.shields.io/badge/Zod-Validation-3E67B1?style=for-the-badge">
+  <img src="https://img.shields.io/badge/Recharts-Charts-8884d8?style=for-the-badge">
+  <img src="https://img.shields.io/badge/Framer%20Motion-Motion-0055FF?style=for-the-badge&logo=framer&logoColor=white">
   <img src="https://img.shields.io/badge/Lucide-Icons-F56565?style=for-the-badge">
 </p>
+
+### AI & интеграции
+
 <p align="center">
-  <img src="https://img.shields.io/badge/REST%20API-02569B?style=for-the-badge&logo=fastapi&logoColor=white">
-  <img src="https://img.shields.io/badge/JSON-000000?style=for-the-badge&logo=json&logoColor=white">
   <img src="https://img.shields.io/badge/Google%20Gemini-AI-8A2BE2?style=for-the-badge&logo=googlegemini&logoColor=white">
   <img src="https://img.shields.io/badge/Telegram%20Bot%20API-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white">
   <img src="https://img.shields.io/badge/SMTP%20Email-EA4335?style=for-the-badge&logo=gmail&logoColor=white">
-  <img src="https://img.shields.io/badge/Webhooks-Integrations-6C63FF?style=for-the-badge">
   <img src="https://img.shields.io/badge/CSV%20Export-217346?style=for-the-badge&logo=microsoftexcel&logoColor=white">
+  <img src="https://img.shields.io/badge/Slack%20Webhook-4A154B?style=for-the-badge&logo=slack&logoColor=white">
 </p>
+
+### Инфраструктура & инструменты
+
 <p align="center">
   <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white">
   <img src="https://img.shields.io/badge/docker%20compose-Infra-2496ED?style=for-the-badge&logo=docker&logoColor=white">
@@ -88,6 +108,9 @@
   <img src="https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black">
   <img src="https://img.shields.io/badge/dotenv-Config-ECD53F?style=for-the-badge">
 </p>
+
+### Архитектура продукта
+
 <p align="center">
   <img src="https://img.shields.io/badge/Workspace%20Isolation-Multi--tenant-7C3AED?style=for-the-badge">
   <img src="https://img.shields.io/badge/RBAC-Roles-0EA5E9?style=for-the-badge">
