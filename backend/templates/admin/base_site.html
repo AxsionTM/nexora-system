@@ -1,0 +1,28 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | NEXORA{% endblock %}
+
+{% block branding %}
+<div id="site-name">
+  <a href="{% url 'admin:index' %}">
+    <span style="display:inline-flex;align-items:center;gap:8px;">
+      <span style="
+        display:inline-flex;width:28px;height:28px;border-radius:8px;
+        background:linear-gradient(135deg,#7c6cf0,#a78bfa);
+        align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;
+      ">N</span>
+      <span>NEXORA Admin</span>
+    </span>
+  </a>
+</div>
+{% endblock %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'admin/css/nexora_admin.css' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block nav-global %}{% endblock %}

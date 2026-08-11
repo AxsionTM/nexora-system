@@ -1,31 +1,348 @@
+/* NEXORA Admin — dark premium theme */
 :root {
-  --nexora-accent: #6c5ce7;
+  --nx-bg: #0b0f17;
+  --nx-surface: #121826;
+  --nx-surface2: #1a2234;
+  --nx-border: #2a3548;
+  --nx-text: #e8edf7;
+  --nx-muted: #8b9bb4;
+  --nx-accent: #7c6cf0;
+  --nx-accent-hover: #6a5ae0;
+  --nx-success: #34d399;
+  --nx-danger: #f87171;
+  --nx-warning: #fbbf24;
+  --nx-radius: 10px;
+  --nx-font: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
 }
+
+html, body {
+  background: var(--nx-bg) !important;
+  color: var(--nx-text) !important;
+  font-family: var(--nx-font) !important;
+}
+
+#container {
+  background: var(--nx-bg) !important;
+}
+
+/* Header */
 #header {
-  background: #111827;
-  color: #fff;
+  background: linear-gradient(135deg, #121826 0%, #1a1430 100%) !important;
+  border-bottom: 1px solid var(--nx-border);
+  color: var(--nx-text) !important;
+  padding: 12px 24px !important;
 }
-#header a:link, #header a:visited {
-  color: #e5e7eb;
+#branding h1, #branding h1 a:link, #branding h1 a:visited {
+  color: var(--nx-text) !important;
+  font-weight: 600 !important;
+  font-size: 1.15rem !important;
+  letter-spacing: -0.02em;
 }
+#user-tools {
+  color: var(--nx-muted) !important;
+  font-size: 0.85rem !important;
+}
+#user-tools a {
+  color: var(--nx-accent) !important;
+  border-bottom-color: transparent !important;
+}
+#user-tools a:hover {
+  color: #a99bff !important;
+}
+
+/* Breadcrumbs */
 div.breadcrumbs {
-  background: #1f2937;
-  color: #d1d5db;
+  background: var(--nx-surface) !important;
+  color: var(--nx-muted) !important;
+  border-bottom: 1px solid var(--nx-border);
+  padding: 10px 24px !important;
 }
-.module h2, .module caption, inline-group h2 {
-  background: #1f2937;
-  color: #fff;
+div.breadcrumbs a {
+  color: var(--nx-accent) !important;
 }
-.button, input[type=submit], input[type=button], .submit-row input, a.button {
-  background: var(--nexora-accent);
-  border-radius: 8px;
+
+/* Content */
+#content {
+  padding: 24px !important;
 }
-.button:hover, input[type=submit]:hover {
-  background: #5a4bd1;
+#content h1 {
+  color: var(--nx-text) !important;
+  font-weight: 600 !important;
+  font-size: 1.5rem !important;
+  letter-spacing: -0.03em;
+  margin-bottom: 1rem !important;
+}
+
+/* Modules / cards */
+.module, .dashboard .module {
+  background: var(--nx-surface) !important;
+  border: 1px solid var(--nx-border) !important;
+  border-radius: var(--nx-radius) !important;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+  margin-bottom: 1.25rem !important;
+}
+.module h2, .module caption, .inline-group h2, #content-related .module h2 {
+  background: var(--nx-surface2) !important;
+  color: var(--nx-text) !important;
+  border-bottom: 1px solid var(--nx-border) !important;
+  font-weight: 600 !important;
+  padding: 12px 16px !important;
+  font-size: 0.9rem !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+.module table {
+  width: 100%;
+}
+.module caption a.section:link, .module caption a.section:visited {
+  color: var(--nx-text) !important;
+}
+
+/* Tables */
+#changelist table, #result_list, .results table {
+  background: var(--nx-surface) !important;
+  border-radius: var(--nx-radius);
+  overflow: hidden;
+}
+#changelist table thead th,
+.results thead th {
+  background: var(--nx-surface2) !important;
+  color: var(--nx-muted) !important;
+  border-bottom: 1px solid var(--nx-border) !important;
+  font-weight: 500 !important;
+  font-size: 0.75rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+#changelist table tbody tr,
+.results tbody tr {
+  background: var(--nx-surface) !important;
+  border-bottom: 1px solid var(--nx-border) !important;
+}
+#changelist table tbody tr:nth-child(odd),
+.results tbody tr:nth-child(odd) {
+  background: #0f1520 !important;
+}
+#changelist table tbody tr:hover,
+.results tbody tr:hover {
+  background: #1a2440 !important;
+}
+#changelist table td, #changelist table th,
+.results td, .results th {
+  color: var(--nx-text) !important;
+  border-color: var(--nx-border) !important;
+  padding: 10px 12px !important;
+}
+a:link, a:visited {
+  color: var(--nx-accent) !important;
+}
+a:hover {
+  color: #a99bff !important;
+}
+
+/* Forms */
+input, textarea, select, .form-row input, .form-row select, .form-row textarea {
+  background: var(--nx-bg) !important;
+  color: var(--nx-text) !important;
+  border: 1px solid var(--nx-border) !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--nx-accent) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(124, 108, 240, 0.25) !important;
+}
+.form-row {
+  border-bottom: 1px solid var(--nx-border) !important;
+  padding: 12px 0 !important;
+}
+label {
+  color: var(--nx-muted) !important;
+  font-weight: 500 !important;
+}
+.help, .helptext {
+  color: var(--nx-muted) !important;
+  font-size: 0.8rem !important;
+}
+
+/* Buttons */
+.button, input[type=submit], input[type=button], .submit-row input, a.button,
+.object-tools a {
+  background: var(--nx-accent) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
+  font-weight: 500 !important;
+  box-shadow: 0 2px 8px rgba(124, 108, 240, 0.35);
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.button:hover, input[type=submit]:hover, .object-tools a:hover {
+  background: var(--nx-accent-hover) !important;
+  transform: translateY(-1px);
+}
+.button.default, input[type=submit].default {
+  background: var(--nx-accent) !important;
+}
+.deletelink, .deletelink-box a {
+  background: var(--nx-danger) !important;
+  color: #fff !important;
+}
+
+/* Object tools */
+.object-tools {
+  margin-bottom: 1rem !important;
+}
+.object-tools li {
+  margin-left: 8px !important;
+}
+
+/* Filter sidebar */
+#changelist-filter {
+  background: var(--nx-surface) !important;
+  border: 1px solid var(--nx-border) !important;
+  border-radius: var(--nx-radius) !important;
+  overflow: hidden;
 }
 #changelist-filter h2 {
-  background: #1f2937;
+  background: var(--nx-surface2) !important;
+  color: var(--nx-text) !important;
+  border: none !important;
+  font-size: 0.85rem !important;
 }
-body {
-  font-family: Inter, system-ui, sans-serif;
+#changelist-filter h3 {
+  color: var(--nx-muted) !important;
+  font-size: 0.75rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+#changelist-filter a {
+  color: var(--nx-text) !important;
+  border-radius: 6px;
+  padding: 4px 8px !important;
+}
+#changelist-filter li.selected a {
+  color: var(--nx-accent) !important;
+  font-weight: 600 !important;
+}
+
+/* Search */
+#changelist-search input[type=text], #searchbar {
+  background: var(--nx-bg) !important;
+  border: 1px solid var(--nx-border) !important;
+  border-radius: 8px !important;
+  color: var(--nx-text) !important;
+}
+
+/* Messages */
+.messagelist li {
+  border-radius: 8px !important;
+  border: none !important;
+  margin-bottom: 8px !important;
+}
+.messagelist .success {
+  background: rgba(52, 211, 153, 0.15) !important;
+  color: var(--nx-success) !important;
+}
+.messagelist .error, .messagelist .warning {
+  background: rgba(248, 113, 113, 0.15) !important;
+  color: var(--nx-danger) !important;
+}
+.messagelist .info {
+  background: rgba(124, 108, 240, 0.15) !important;
+  color: var(--nx-accent) !important;
+}
+
+/* Login page */
+.login {
+  background: var(--nx-bg) !important;
+}
+.login #container {
+  background: var(--nx-surface) !important;
+  border: 1px solid var(--nx-border) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  overflow: hidden;
+}
+.login #header {
+  background: transparent !important;
+  border: none !important;
+  text-align: center;
+}
+.login .form-row {
+  border: none !important;
+}
+.login .submit-row {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Related widget / calendar */
+.calendarbox, .clockbox {
+  background: var(--nx-surface) !important;
+  border: 1px solid var(--nx-border) !important;
+  border-radius: 8px !important;
+  color: var(--nx-text) !important;
+}
+
+/* Paginator */
+.paginator {
+  color: var(--nx-muted) !important;
+  background: transparent !important;
+  border: none !important;
+}
+.paginator a {
+  background: var(--nx-surface2) !important;
+  border-radius: 6px !important;
+  padding: 4px 10px !important;
+}
+
+/* Submit row */
+.submit-row {
+  background: var(--nx-surface2) !important;
+  border: 1px solid var(--nx-border) !important;
+  border-radius: var(--nx-radius) !important;
+  padding: 12px 16px !important;
+}
+
+/* Selector (M2M) */
+.selector, .selector-available, .selector-chosen {
+  background: var(--nx-surface) !important;
+  border-color: var(--nx-border) !important;
+  color: var(--nx-text) !important;
+}
+.selector h2 {
+  background: var(--nx-surface2) !important;
+  color: var(--nx-text) !important;
+}
+
+/* Dashboard welcome */
+.dashboard #content {
+  max-width: 1200px;
+}
+
+/* Fieldsets */
+fieldset.module {
+  padding-bottom: 8px !important;
+}
+fieldset.module h2 {
+  border-radius: 0 !important;
+}
+
+/* Checkboxes */
+input[type=checkbox] {
+  accent-color: var(--nx-accent);
+}
+
+/* Action bar */
+.actions {
+  background: var(--nx-surface2) !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  color: var(--nx-text) !important;
+}
+.actions select {
+  margin-right: 8px;
 }

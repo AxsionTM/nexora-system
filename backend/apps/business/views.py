@@ -655,7 +655,7 @@ class IntegrationConnectView(CurrentWorkspaceMixin, APIView):
                 )
             if not getattr(dj_settings, "TELEGRAM_BOT_TOKEN", ""):
                 return Response(
-                    {"detail": "TELEGRAM_BOT_TOKEN не задан в .env сервера."},
+                    {"detail": "Telegram-бот ещё не настроен администратором платформы."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
         if provider == Integration.Provider.EMAIL:
@@ -666,7 +666,7 @@ class IntegrationConnectView(CurrentWorkspaceMixin, APIView):
                 )
             if not getattr(dj_settings, "EMAIL_HOST", ""):
                 return Response(
-                    {"detail": "SMTP не настроен (EMAIL_HOST в .env)."},
+                    {"detail": "Отправка email ещё не настроена администратором платформы."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
         if provider == Integration.Provider.WEBHOOK:

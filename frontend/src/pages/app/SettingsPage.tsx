@@ -178,7 +178,7 @@ function BillingPanel() {
               ${Number(data.balance).toLocaleString()}
             </p>
             <p className="mt-2 text-xs text-muted">
-              Пополнение баланса выполняет администратор через /admin
+              Пополнение баланса выполняется администратором платформы.
             </p>
           </div>
           <div className="text-right">
@@ -769,8 +769,7 @@ export default function SettingsPage() {
           {tab === "integrations" && (
             <div className="space-y-6">
               <div className="rounded-xl border border-border bg-surface/50 px-4 py-3 text-sm text-muted">
-                Бесплатные интеграции для уведомлений и экспорта. Настройки
-                каналов (токены) — в Части 2 доработки.
+                Подключите каналы уведомлений и экспорта данных для вашего бизнеса.
               </div>
               {connected.length > 0 && (
                 <div>
@@ -869,13 +868,13 @@ export default function SettingsPage() {
               Подключение: {connectProvider}
             </h3>
             <p className="mt-1 text-xs text-muted">
-              Токен бота и SMTP задаются в .env на сервере. Здесь — куда слать уведомления.
+              Укажите, куда присылать уведомления по этому каналу.
             </p>
             <div className="mt-4 space-y-3">
               {connectProvider === "telegram" && (
                 <Input
-                  label="Telegram chat_id"
-                  placeholder="Например 123456789"
+                  label="ID чата Telegram"
+                  placeholder="Числовой ID чата или группы"
                   value={connectConfig.chat_id || ""}
                   onChange={(e) =>
                     setConnectConfig((c) => ({ ...c, chat_id: e.target.value }))
@@ -896,15 +895,15 @@ export default function SettingsPage() {
               {connectProvider === "webhook" && (
                 <>
                   <Input
-                    label="Webhook URL"
-                    placeholder="https://..."
+                    label="Адрес webhook"
+                    placeholder="https://example.com/hook"
                     value={connectConfig.url || ""}
                     onChange={(e) =>
                       setConnectConfig((c) => ({ ...c, url: e.target.value }))
                     }
                   />
                   <Input
-                    label="Секрет (опционально)"
+                    label="Секретный ключ (необязательно)"
                     value={connectConfig.secret || ""}
                     onChange={(e) =>
                       setConnectConfig((c) => ({ ...c, secret: e.target.value }))
@@ -914,8 +913,8 @@ export default function SettingsPage() {
               )}
               {connectProvider === "slack" && (
                 <Input
-                  label="Slack Incoming Webhook URL"
-                  placeholder="https://hooks.slack.com/..."
+                  label="Адрес Slack webhook"
+                  placeholder="https://hooks.slack.com/services/..."
                   value={connectConfig.webhook_url || ""}
                   onChange={(e) =>
                     setConnectConfig((c) => ({
@@ -927,17 +926,17 @@ export default function SettingsPage() {
               )}
               {connectProvider === "csv_export" && (
                 <p className="text-sm text-muted">
-                  CSV-экспорт не требует доп. настроек. После подключения появится ссылка на скачивание.
+                  После подключения можно скачивать заказы, товары и клиентов в CSV.
                 </p>
               )}
               {connectProvider === "google_sheets" && (
                 <p className="text-sm text-muted">
-                  Для Google Sheets позже: service account JSON в .env. Пока можно подключить как метку.
+                  Подключение Google Таблиц: укажите, что канал активен. Экспорт можно расширить позже.
                 </p>
               )}
               {connectProvider === "google_analytics" && (
                 <Input
-                  label="GA4 Measurement ID (G-XXXX)"
+                  label="Идентификатор Google Analytics (G-XXXX)"
                   value={connectConfig.measurement_id || ""}
                   onChange={(e) =>
                     setConnectConfig((c) => ({

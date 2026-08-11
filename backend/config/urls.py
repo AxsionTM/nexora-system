@@ -1,8 +1,8 @@
 from django.contrib import admin
 
-admin.site.site_header = "NEXORA Админка"
+admin.site.site_header = "NEXORA"
 admin.site.site_title = "NEXORA"
-admin.site.index_title = "Управление платформой"
+admin.site.index_title = "Панель управления"
 from django.urls import include, path
 
 urlpatterns = [
