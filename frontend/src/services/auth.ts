@@ -114,3 +114,18 @@ export async function purchasePlan(plan: string, months = 1) {
   const { data } = await api.post("/auth/plans/purchase/", { plan, months });
   return data as { plan: string; expires_at: string; paid: string; balance: string };
 }
+
+
+export async function createTopUp(amount: number, return_url?: string) {
+  const { data } = await api.post<{
+    mode: string;
+    checkout_url: string | null;
+    payment_id?: string;
+    message?: string;
+    balance?: string;
+  }>("/auth/wallet/topup/", {
+    amount,
+    return_url: return_url || `${window.location.origin}/settings#billing`,
+  });
+  return data;
+}

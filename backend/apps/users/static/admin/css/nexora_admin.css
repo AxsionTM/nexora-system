@@ -1,0 +1,31 @@
+:root {
+  --nexora-accent: #6c5ce7;
+}
+#header {
+  background: #111827;
+  color: #fff;
+}
+#header a:link, #header a:visited {
+  color: #e5e7eb;
+}
+div.breadcrumbs {
+  background: #1f2937;
+  color: #d1d5db;
+}
+.module h2, .module caption, inline-group h2 {
+  background: #1f2937;
+  color: #fff;
+}
+.button, input[type=submit], input[type=button], .submit-row input, a.button {
+  background: var(--nexora-accent);
+  border-radius: 8px;
+}
+.button:hover, input[type=submit]:hover {
+  background: #5a4bd1;
+}
+#changelist-filter h2 {
+  background: #1f2937;
+}
+body {
+  font-family: Inter, system-ui, sans-serif;
+}

@@ -51,6 +51,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     class Meta:
         ordering = ["-date_joined"]
+        verbose_name = "Пользователь"
+        verbose_name_plural = "Пользователи"
 
     def __str__(self):
         return self.email
@@ -86,6 +88,8 @@ class WalletTransaction(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        verbose_name = "Транзакция кошелька"
+        verbose_name_plural = "Транзакции кошелька"
 
     def __str__(self):
         return f"{self.user.email} {self.type} {self.amount}"
@@ -104,6 +108,8 @@ class SubscriptionHistory(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        verbose_name = "История подписки"
+        verbose_name_plural = "История подписок"
 
     def __str__(self):
         return f"{self.user.email} → {self.plan}"

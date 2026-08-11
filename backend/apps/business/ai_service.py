@@ -199,7 +199,7 @@ def answer_question(
     model = (
         os.environ.get("GEMINI_MODEL")
         or getattr(settings, "GEMINI_MODEL", "")
-        or "gemini-2.5-flash"
+        or "gemini-2.0-flash"
     ).strip()
 
     answer = None
@@ -211,9 +211,9 @@ def answer_question(
             "⚠️ Не настроен GEMINI_API_KEY.\n\n"
             "Добавьте ключ Google AI Studio в файл `.env`:\n"
             "GEMINI_API_KEY=ваш_ключ\n"
-            "GEMINI_MODEL=gemini-2.5-flash\n\n"
+            "GEMINI_MODEL=gemini-2.0-flash\n\n"
             "Затем перезапустите backend. "
-            "Без ключа нейросеть не может отвечать — формульные ответы отключены."
+            "Обратитесь к администратору или добавьте ключ на сервере."
         )
         provider = "error"
         error = "missing_api_key"

@@ -16,6 +16,8 @@ class Workspace(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        verbose_name = "Рабочее пространство"
+        verbose_name_plural = "Рабочие пространства"
 
     def __str__(self):
         return self.name
@@ -42,6 +44,8 @@ class WorkspaceMember(models.Model):
     class Meta:
         unique_together = ("workspace", "user")
         ordering = ["joined_at"]
+        verbose_name = "Участник команды"
+        verbose_name_plural = "Команда"
 
     def __str__(self):
         return f"{self.user} @ {self.workspace} ({self.role})"

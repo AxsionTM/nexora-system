@@ -129,6 +129,14 @@ SIMPLE_JWT = {
 
 # AI — key only from env, never in frontend / source code
 GEMINI_API_KEY = env("GEMINI_API_KEY", default="")
-GEMINI_MODEL = env("GEMINI_MODEL", default="gemini-2.5-flash")
+GEMINI_MODEL = env("GEMINI_MODEL", default="gemini-2.0-flash")
 # legacy aliases (optional)
 OPENAI_API_KEY = env("OPENAI_API_KEY", default="")
+
+
+# YooKassa (wallet top-up)
+YOOKASSA_SHOP_ID = env("YOOKASSA_SHOP_ID", default="")
+YOOKASSA_SECRET_KEY = env("YOOKASSA_SECRET_KEY", default="")
+YOOKASSA_DEV_AUTO_CREDIT = env.bool("YOOKASSA_DEV_AUTO_CREDIT", default=True)
+
+# Gemini

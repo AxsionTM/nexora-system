@@ -7,6 +7,8 @@ from .views import (
     PlansListView,
     PurchasePlanView,
     AdminGrantView,
+    TopUpView,
+    YooKassaWebhookView,
     ChangePasswordView,
     MeView,
     PasswordResetConfirmView,
@@ -30,4 +32,6 @@ urlpatterns = [
     path("plans/", PlansListView.as_view(), name="plans"),
     path("plans/purchase/", PurchasePlanView.as_view(), name="plans-purchase"),
     path("admin/grant/", AdminGrantView.as_view(), name="admin-grant"),
+    path("wallet/topup/", TopUpView.as_view(), name="wallet-topup"),
+    path("payments/yookassa/webhook/", YooKassaWebhookView.as_view(), name="yookassa-webhook"),
 ]

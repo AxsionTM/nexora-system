@@ -262,3 +262,41 @@ class AdminGrantView(APIView):
                 }
             )
         return Response({"detail": "action: deposit | set_plan"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TopUpView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from decimal import Decimal
+        from .payments import create_topup_payment
+
+        try:
+            amount = Decimal(str(request.data.get("amount") or "0"))
+        except Exception:
+            return Response({"detail": "Некорректная сумма"}, status=status.HTTP_400_BAD_REQUEST)
+
+        return_url = request.data.get("return_url") or "http://localhost:5173/settings#billing"
+        try:
+            result = create_topup_payment(request.user, amount, return_url)
+        except ValueError as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(result)
+
+
+class YooKassaWebhookView(APIView):
+    authentication_classes = []
+    permission_classes = []
+
+    def post(self, request):
+        from .payments import process_yookassa_webhook
+        import logging
+        log = logging.getLogger(__name__)
+        try:
+            body = request.data if isinstance(request.data, dict) else {}
+            result = process_yookassa_webhook(body)
+            log.info("YooKassa webhook: %s", result)
+            return Response({"ok": True, **result})
+        except Exception:
+            log.exception("Webhook error")
+            return Response({"ok": False}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

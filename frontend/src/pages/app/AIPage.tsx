@@ -7,6 +7,9 @@ import * as aiApi from "@/services/ai";
 import type { AIMessage } from "@/services/ai";
 import { cn } from "@/lib/utils";
 
+const PLAN_UPGRADE_HINT =
+  "AI-ассистент доступен на тарифах Pro и Бизнес.\n\nОбновите тариф в Настройках → Биллинг, чтобы задавать вопросы о выручке, прибыли, товарах и заказах.";
+
 const SUGGESTIONS = [
   "Почему изменилась прибыль?",
   "Какие товары продаются лучше всего?",
@@ -65,13 +68,24 @@ export default function AIPage() {
       setConversationId(res.conversation_id);
       setProvider(res.provider);
       setMessages((m) => [...m, res.message]);
-    } catch {
+    } catch (e: unknown) {
+      const status = (e as { response?: { status?: number; data?: { detail?: string } } })?.response?.status;
+      const detail = (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      let content =
+        "AI временно недоступен. Попробуйте ещё раз через несколько минут.";
+      if (status === 403) {
+        content =
+          detail ||
+          "AI-ассистент доступен на тарифах Pro и Бизнес.\n\nОбновите тариф, чтобы задавать вопросы о выручке, прибыли, товарах, заказах и бизнес-показателях.";
+      } else if (detail) {
+        content = String(detail);
+      }
       setMessages((m) => [
         ...m,
         {
           id: Date.now() + 1,
           role: "assistant",
-          content: "Не удалось получить ответ. Проверьте соединение с API и попробуйте снова.",
+          content,
           created_at: new Date().toISOString(),
         },
       ]);
