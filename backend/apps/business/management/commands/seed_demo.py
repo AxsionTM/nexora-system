@@ -238,19 +238,19 @@ class Command(BaseCommand):
         from django.utils import timezone as tz
         Integration.objects.create(
             workspace=workspace,
-            provider=Integration.Provider.STRIPE,
+            provider=Integration.Provider.TELEGRAM,
             status=Integration.Status.CONNECTED,
             connected_at=tz.now(),
             config={"mode": "sandbox"},
         )
         Integration.objects.create(
             workspace=workspace,
-            provider=Integration.Provider.SHOPIFY,
+            provider=Integration.Provider.CSV_EXPORT,
             status=Integration.Status.CONNECTED,
             connected_at=tz.now(),
             config={"mode": "sandbox"},
         )
-        self.stdout.write(self.style.SUCCESS("Integrations: Stripe + Shopify (sandbox)"))
+        self.stdout.write(self.style.SUCCESS("Integrations: Telegram + CSV Export"))
 
         self.stdout.write(self.style.SUCCESS("Seed complete. Login with:"))
         self.stdout.write(f"  email:    {SEED_EMAIL}")

@@ -105,9 +105,7 @@ export default function SettingsPage() {
   }, [workspace]);
 
   // Payments sandbox
-  const [amount, setAmount] = useState("49.00");
-  const [simulate, setSimulate] = useState<"success" | "failed" | "pending">("success");
-  const [currentPlan, setCurrentPlan] = useState<"free" | "pro" | "business">("pro");
+      const [currentPlan, setCurrentPlan] = useState<"free" | "pro" | "business">("pro");
 
   const integrationsQ = useQuery({
     queryKey: ["integrations", workspace?.id],
@@ -117,15 +115,7 @@ export default function SettingsPage() {
     },
   });
 
-  const paymentsQ = useQuery({
-    queryKey: ["payments", workspace?.id],
-    queryFn: async () => {
-      await ensure();
-      return api.listPayments(workspace?.id);
-    },
-  });
-
-  const profileMutation = useMutation({
+    const profileMutation = useMutation({
     mutationFn: () =>
       authApi.updateProfile({ first_name: firstName, last_name: lastName }),
     onSuccess: (u) => {
@@ -167,24 +157,7 @@ export default function SettingsPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["integrations"] }),
   });
 
-  const payM = useMutation({
-    mutationFn: () =>
-      api.createSandboxPayment({ amount, simulate }, workspace?.id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["payments"] });
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    },
-  });
-
-  const refundM = useMutation({
-    mutationFn: (id: number) => api.refundPayment(id, workspace?.id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["payments"] });
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    },
-  });
-
-  const integrations = integrationsQ.data || [];
+      const integrations = integrationsQ.data || [];
   const connected = integrations.filter((i) => i.status === "connected");
   const available = integrations.filter((i) => i.status !== "connected");
 
@@ -349,26 +322,40 @@ export default function SettingsPage() {
               <ul className="mt-5 max-w-md space-y-3">
                 {(
                   [
-                    ["orders", "Новые заказы"],
-                    ["payments", "Платежи и возвраты"],
-                    ["stock", "Низкий остаток на складе"],
-                    ["team", "Изменения в команде"],
-                    ["reports", "Месячные отчёты"],
+                    ["orders", "Новые заказы", "Когда появляется новый заказ"],
+                    ["payments", "Платежи", "Оплаты и возвраты"],
+                    ["stock", "Склад", "Низкий остаток товара"],
+                    ["team", "Команда", "Новые участники и роли"],
+                    ["reports", "Отчёты", "Месячные сводки"],
                   ] as const
-                ).map(([key, label]) => (
+                ).map(([key, label, hint]) => (
                   <li
                     key={key}
-                    className="flex items-center justify-between rounded-lg border border-border bg-background px-3 py-2.5"
+                    className="flex items-center justify-between gap-4 rounded-xl border border-border bg-background px-4 py-3"
                   >
-                    <span className="text-sm">{label}</span>
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 rounded border-border"
-                      checked={notifPrefs[key]}
-                      onChange={(e) =>
-                        setNotifPrefs((p) => ({ ...p, [key]: e.target.checked }))
+                    <div>
+                      <p className="text-sm font-medium">{label}</p>
+                      <p className="text-xs text-muted">{hint}</p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={notifPrefs[key]}
+                      onClick={() =>
+                        setNotifPrefs((p) => ({ ...p, [key]: !p[key] }))
                       }
-                    />
+                      className={cn(
+                        "relative h-7 w-12 shrink-0 rounded-full transition-colors",
+                        notifPrefs[key] ? "bg-accent" : "bg-border"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform",
+                          notifPrefs[key] && "translate-x-5"
+                        )}
+                      />
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -419,9 +406,9 @@ export default function SettingsPage() {
           {tab === "integrations" && (
             <div className="space-y-6">
               <div className="rounded-xl border border-border bg-surface/50 px-4 py-3 text-sm text-muted">
-                Режим{" "}
-                <span className="font-medium text-foreground">DEMO / TEST</span> —
-                подключение имитируется, реальные API-ключи не используются.
+                Полезные <span className="font-medium text-foreground">бесплатные</span> интеграции
+                для уведомлений и экспорта. Подключение сохраняется в workspace;
+                настройки каналов (токен бота, SMTP и т.д.) можно добавить позже в config.
               </div>
 
               {connected.length > 0 && (
@@ -435,9 +422,13 @@ export default function SettingsPage() {
                       >
                         <div>
                           <p className="text-sm font-medium">{i.provider_display}</p>
-                          <Badge variant="success" className="mt-1">
-                            Подключено
-                          </Badge>
+                          {i.description && (
+                            <p className="mt-1 text-xs text-muted line-clamp-2">{i.description}</p>
+                          )}
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            <Badge variant="success">Подключено</Badge>
+                            {i.is_free && <Badge variant="default">Бесплатно</Badge>}
+                          </div>
                         </div>
                         <Button
                           variant="secondary"
@@ -463,7 +454,13 @@ export default function SettingsPage() {
                     >
                       <div>
                         <p className="text-sm font-medium">{i.provider_display}</p>
-                        <p className="mt-0.5 text-xs text-muted">Не подключено</p>
+                        {i.description && (
+                          <p className="mt-1 text-xs text-muted line-clamp-2">{i.description}</p>
+                        )}
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          <span className="text-xs text-muted">Не подключено</span>
+                          {i.is_free && <Badge variant="default">Бесплатно</Badge>}
+                        </div>
                       </div>
                       <Button
                         size="sm"
@@ -476,102 +473,9 @@ export default function SettingsPage() {
                   ))}
                 </div>
               </div>
-
-              {/* Sandbox payments under integrations for convenience */}
-              <div className="rounded-xl border border-border bg-surface p-5">
-                <p className="text-sm font-medium">Sandbox-платёж</p>
-                <p className="mt-1 text-xs text-muted">
-                  Имитация платежа без реальных денег
-                </p>
-                <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                  <Input
-                    label="Сумма"
-                    type="number"
-                    step="0.01"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                  />
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium">Результат</label>
-                    <select
-                      className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm"
-                      value={simulate}
-                      onChange={(e) =>
-                        setSimulate(e.target.value as "success" | "failed" | "pending")
-                      }
-                    >
-                      <option value="success">Успешно</option>
-                      <option value="failed">Ошибка</option>
-                      <option value="pending">Ожидает</option>
-                    </select>
-                  </div>
-                  <div className="flex items-end">
-                    <Button
-                      className="w-full"
-                      onClick={() => payM.mutate()}
-                      disabled={payM.isPending || !amount}
-                    >
-                      {payM.isPending ? "Отправка..." : "Создать платёж"}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              {paymentsQ.data && paymentsQ.data.length > 0 && (
-                <div>
-                  <p className="mb-3 text-sm font-medium">История платежей</p>
-                  <div className="overflow-x-auto rounded-xl border border-border">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-border bg-surface text-left text-xs text-muted">
-                          <th className="px-4 py-3 font-medium">ID</th>
-                          <th className="px-4 py-3 font-medium">Сумма</th>
-                          <th className="px-4 py-3 font-medium">Статус</th>
-                          <th className="px-4 py-3 font-medium" />
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {paymentsQ.data.map((p: Payment) => (
-                          <tr key={p.id} className="border-b border-border last:border-0">
-                            <td className="px-4 py-3">#{p.id}</td>
-                            <td className="px-4 py-3 font-medium">
-                              ${Number(p.amount).toLocaleString()}
-                            </td>
-                            <td className="px-4 py-3">
-                              <Badge
-                                variant={
-                                  p.status === "success"
-                                    ? "success"
-                                    : p.status === "failed"
-                                      ? "danger"
-                                      : "default"
-                                }
-                              >
-                                {p.status_display}
-                              </Badge>
-                            </td>
-                            <td className="px-4 py-3">
-                              {p.status === "success" && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => refundM.mutate(p.id)}
-                                >
-                                  Возврат
-                                </Button>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
-          {/* Billing */}
           {tab === "billing" && (
             <div className="space-y-6">
               <div className="rounded-xl border border-border bg-surface p-5 sm:p-6">

@@ -1,8 +1,8 @@
 from datetime import timedelta
 from decimal import Decimal
 
-from django.db.models import Sum, Count, Avg, Q, F, ExpressionWrapper, DecimalField
-from django.db.models.functions import TruncDate, TruncMonth
+from django.db.models import Sum, Count, Avg, Q, F, DecimalField, ExpressionWrapper
+from django.db.models.functions import TruncDate
 from django.utils import timezone
 
 from .models import Order, OrderItem, Product, Customer, Workspace, Expense
@@ -16,6 +16,14 @@ PERIOD_DAYS = {
     "1Y": 365,
 }
 
+PERIOD_LABELS = {
+    "7D": "7 дней",
+    "30D": "30 дней",
+    "3M": "3 месяца",
+    "6M": "6 месяцев",
+    "1Y": "1 год",
+}
+
 
 def _period_bounds(period: str):
     days = PERIOD_DAYS.get(period, 30)
@@ -25,10 +33,20 @@ def _period_bounds(period: str):
     return start, end, prev_start
 
 
-def _revenue_qs(workspace, start, end):
+def _paid_orders_qs(workspace, start, end):
+    """Revenue: paid orders that are not cancelled."""
     return Order.objects.filter(
         workspace=workspace,
         payment_status=Order.PaymentStatus.PAID,
+        created_at__gte=start,
+        created_at__lt=end,
+    ).exclude(status=Order.Status.CANCELLED)
+
+
+def _cancelled_orders_qs(workspace, start, end):
+    return Order.objects.filter(
+        workspace=workspace,
+        status=Order.Status.CANCELLED,
         created_at__gte=start,
         created_at__lt=end,
     )
@@ -37,14 +55,50 @@ def _revenue_qs(workspace, start, end):
 def dashboard_summary(workspace: Workspace, period: str = "30D") -> dict:
     start, end, prev_start = _period_bounds(period)
 
-    current_orders = _revenue_qs(workspace, start, end)
-    prev_orders = _revenue_qs(workspace, prev_start, start)
+    current_orders = _paid_orders_qs(workspace, start, end)
+    prev_orders = _paid_orders_qs(workspace, prev_start, start)
 
     revenue = current_orders.aggregate(t=Sum("total"))["t"] or Decimal("0")
     prev_revenue = prev_orders.aggregate(t=Sum("total"))["t"] or Decimal("0")
 
-    orders_count = current_orders.count()
-    prev_orders_count = prev_orders.count()
+    # All non-cancelled orders count (business activity)
+    orders_count = (
+        Order.objects.filter(
+            workspace=workspace,
+            created_at__gte=start,
+            created_at__lt=end,
+        )
+        .exclude(status=Order.Status.CANCELLED)
+        .count()
+    )
+
+    prev_orders_count = (
+        Order.objects.filter(
+            workspace=workspace,
+            created_at__gte=prev_start,
+            created_at__lt=start,
+        )
+        .exclude(status=Order.Status.CANCELLED)
+        .count()
+    )
+
+    cancelled_qs = _cancelled_orders_qs(workspace, start, end)
+
+    cancelled_count = cancelled_qs.count()
+
+    cancelled_amount = (
+        cancelled_qs.aggregate(t=Sum("total"))["t"]
+        or Decimal("0")
+    )
+
+    prev_cancelled_amount = (
+        _cancelled_orders_qs(
+            workspace,
+            prev_start,
+            start,
+        ).aggregate(t=Sum("total"))["t"]
+        or Decimal("0")
+    )
 
     customers_count = Customer.objects.filter(
         workspace=workspace,
@@ -70,17 +124,25 @@ def dashboard_summary(workspace: Workspace, period: str = "30D") -> dict:
         date__lt=start.date(),
     )
 
-    expenses = expenses_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0")
-    prev_expenses = (
-        prev_expenses_qs.aggregate(t=Sum("amount"))["t"] or Decimal("0")
+    expenses = (
+        expenses_qs.aggregate(t=Sum("amount"))["t"]
+        or Decimal("0")
     )
 
+    prev_expenses = (
+        prev_expenses_qs.aggregate(t=Sum("amount"))["t"]
+        or Decimal("0")
+    )
+
+    # Lost revenue from cancellations is not counted as revenue;
+    # net profit = paid revenue - operating expenses
     net_profit = revenue - expenses
     prev_net = prev_revenue - prev_expenses
 
     aov = (
-        current_orders.aggregate(a=Avg("total"))["a"] or Decimal("0")
-        if orders_count
+        current_orders.aggregate(a=Avg("total"))["a"]
+        or Decimal("0")
+        if current_orders.exists()
         else Decimal("0")
     )
 
@@ -88,10 +150,14 @@ def dashboard_summary(workspace: Workspace, period: str = "30D") -> dict:
         if previous == 0:
             return 100.0 if current > 0 else 0.0
 
-        return round(float((current - previous) / previous * 100), 1)
+        return round(
+            float((current - previous) / previous * 100),
+            1,
+        )
 
     return {
         "period": period,
+        "period_label": PERIOD_LABELS.get(period, period),
         "revenue": str(revenue),
         "revenue_change": pct_change(revenue, prev_revenue),
         "orders": orders_count,
@@ -103,6 +169,12 @@ def dashboard_summary(workspace: Workspace, period: str = "30D") -> dict:
         "net_profit": str(net_profit),
         "net_profit_change": pct_change(net_profit, prev_net),
         "average_order_value": str(round(aov, 2)),
+        "cancelled_orders": cancelled_count,
+        "cancelled_amount": str(cancelled_amount),
+        "cancelled_amount_change": pct_change(
+            cancelled_amount,
+            prev_cancelled_amount,
+        ),
         "conversion_rate": 0.0,
     }
 
@@ -112,23 +184,29 @@ def revenue_series(workspace: Workspace, period: str = "30D") -> list:
     days = PERIOD_DAYS.get(period, 30)
 
     qs = (
-        _revenue_qs(workspace, start, end)
+        _paid_orders_qs(workspace, start, end)
         .annotate(day=TruncDate("created_at"))
         .values("day")
         .annotate(value=Sum("total"))
         .order_by("day")
     )
 
-    by_day = {row["day"]: float(row["value"] or 0) for row in qs}
+    by_day = {
+        row["day"]: float(row["value"] or 0)
+        for row in qs
+    }
 
     series = []
 
     for i in range(days):
         d = (start + timedelta(days=i)).date()
-        series.append({
-            "date": d.isoformat(),
-            "value": by_day.get(d, 0.0),
-        })
+
+        series.append(
+            {
+                "date": d.isoformat(),
+                "value": by_day.get(d, 0.0),
+            }
+        )
 
     return series
 
@@ -143,22 +221,29 @@ def orders_series(workspace: Workspace, period: str = "30D") -> list:
             created_at__gte=start,
             created_at__lt=end,
         )
+        .exclude(status=Order.Status.CANCELLED)
         .annotate(day=TruncDate("created_at"))
         .values("day")
         .annotate(value=Count("id"))
         .order_by("day")
     )
 
-    by_day = {row["day"]: row["value"] for row in qs}
+    by_day = {
+        row["day"]: row["value"]
+        for row in qs
+    }
 
     series = []
 
     for i in range(days):
         d = (start + timedelta(days=i)).date()
-        series.append({
-            "date": d.isoformat(),
-            "value": by_day.get(d, 0),
-        })
+
+        series.append(
+            {
+                "date": d.isoformat(),
+                "value": by_day.get(d, 0),
+            }
+        )
 
     return series
 
@@ -169,53 +254,51 @@ def top_products(
     limit: int = 5,
 ) -> list:
     """
-    Return top products by revenue for the selected period.
+    Returns the best-selling products for the selected period.
 
-    Calculate quantity * unit_price in Python instead of nesting the
-    expression inside Sum(), which causes Django 5.1 aggregate errors.
+    Revenue is calculated as:
+
+        quantity * unit_price
+
+    The multiplication is wrapped in ExpressionWrapper before
+    applying Sum(), because Django does not allow the previous
+    aggregate expression used here.
     """
+
     start, end, _ = _period_bounds(period)
 
-    items = (
+    rows = (
         OrderItem.objects.filter(
             order__workspace=workspace,
             order__payment_status=Order.PaymentStatus.PAID,
             order__created_at__gte=start,
             order__created_at__lt=end,
         )
-        .values("product_name", "quantity", "unit_price")
+        .exclude(order__status=Order.Status.CANCELLED)
+        .annotate(
+            line_revenue=ExpressionWrapper(
+                F("quantity") * F("unit_price"),
+                output_field=DecimalField(
+                    max_digits=14,
+                    decimal_places=2,
+                ),
+            )
+        )
+        .values("product_name")
+        .annotate(
+            quantity=Sum("quantity"),
+            revenue=Sum("line_revenue"),
+        )
+        .order_by("-revenue")[:limit]
     )
-
-    totals = {}
-
-    for item in items:
-        name = item["product_name"] or "Без названия"
-        quantity = item["quantity"] or 0
-        unit_price = item["unit_price"] or Decimal("0")
-
-        if name not in totals:
-            totals[name] = {
-                "name": name,
-                "quantity": 0,
-                "revenue": Decimal("0"),
-            }
-
-        totals[name]["quantity"] += quantity
-        totals[name]["revenue"] += Decimal(str(quantity)) * Decimal(str(unit_price))
-
-    top = sorted(
-        totals.values(),
-        key=lambda item: item["revenue"],
-        reverse=True,
-    )[:limit]
 
     return [
         {
-            "name": item["name"],
-            "quantity": item["quantity"],
-            "revenue": str(item["revenue"]),
+            "name": row["product_name"],
+            "quantity": row["quantity"] or 0,
+            "revenue": str(row["revenue"] or 0),
         }
-        for item in top
+        for row in rows
     ]
 
 
@@ -228,14 +311,18 @@ def recent_orders(workspace: Workspace, limit: int = 8) -> list:
 
     return [
         {
-            "id": o.id,
-            "customer_name": o.customer.name if o.customer else None,
-            "status": o.status,
-            "payment_status": o.payment_status,
-            "total": str(o.total),
-            "created_at": o.created_at.isoformat(),
+            "id": order.id,
+            "customer_name": (
+                order.customer.name
+                if order.customer
+                else None
+            ),
+            "status": order.status,
+            "payment_status": order.payment_status,
+            "total": str(order.total),
+            "created_at": order.created_at.isoformat(),
         }
-        for o in orders
+        for order in orders
     ]
 
 
@@ -254,16 +341,22 @@ def expenses_series(workspace: Workspace, period: str = "30D") -> list:
         .order_by("date")
     )
 
-    by_day = {row["date"]: float(row["value"] or 0) for row in qs}
+    by_day = {
+        row["date"]: float(row["value"] or 0)
+        for row in qs
+    }
 
     series = []
 
     for i in range(days):
         d = (start + timedelta(days=i)).date()
-        series.append({
-            "date": d.isoformat(),
-            "value": by_day.get(d, 0.0),
-        })
+
+        series.append(
+            {
+                "date": d.isoformat(),
+                "value": by_day.get(d, 0.0),
+            }
+        )
 
     return series
 
@@ -289,9 +382,12 @@ def expenses_by_category(
 
     return [
         {
-            "category": r["category"],
-            "label": labels.get(r["category"], r["category"]),
-            "total": str(r["total"] or 0),
+            "category": row["category"],
+            "label": labels.get(
+                row["category"],
+                row["category"],
+            ),
+            "total": str(row["total"] or 0),
         }
-        for r in rows
+        for row in rows
     ]

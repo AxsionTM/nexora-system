@@ -35,6 +35,27 @@ class ProductSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id", "created_at", "updated_at")
 
+    def validate(self, attrs):
+        stock = attrs.get("stock")
+        if stock is None and self.instance is not None:
+            stock = self.instance.stock
+        if stock is not None and int(stock) <= 0:
+            attrs["is_active"] = False
+            attrs["stock"] = max(0, int(stock))
+        return attrs
+
+    def create(self, validated_data):
+        if validated_data.get("stock", 0) <= 0:
+            validated_data["is_active"] = False
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        stock = validated_data.get("stock", instance.stock)
+        if stock is not None and int(stock) <= 0:
+            validated_data["is_active"] = False
+            validated_data["stock"] = 0
+        return super().update(instance, validated_data)
+
 
 class CustomerSerializer(serializers.ModelSerializer):
     total_orders = serializers.SerializerMethodField()
@@ -80,36 +101,70 @@ class OrderSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id", "total", "created_at", "updated_at")
 
-    def create(self, validated_data):
-        items_data = validated_data.pop("items")
-        workspace = self.context["workspace"]
-        order = Order.objects.create(workspace=workspace, **validated_data)
+    def _apply_items(self, order, items_data, *, restore_stock=False):
+        """Validate stock, create line items, decrement inventory."""
+        # Optional: restore stock from previous items when editing
+        if restore_stock:
+            for old in order.items.select_related("product"):
+                if old.product_id and old.product:
+                    old.product.stock += old.quantity
+                    old.product.is_active = True if old.product.stock > 0 else old.product.is_active
+                    old.product.save(update_fields=["stock", "is_active"])
+            order.items.all().delete()
+
         for item_data in items_data:
             product = item_data.get("product")
+            qty = int(item_data.get("quantity") or 1)
+            if qty < 1:
+                raise serializers.ValidationError({"items": ["Количество должно быть не меньше 1."]})
+
+            if product is not None:
+                product.refresh_from_db()
+                if product.stock < qty:
+                    raise serializers.ValidationError(
+                        {
+                            "items": [
+                                f"Недостаточно «{product.name}» на складе. "
+                                f"Доступно: {product.stock}, запрошено: {qty}."
+                            ]
+                        }
+                    )
+                if not product.is_active and product.stock <= 0:
+                    raise serializers.ValidationError(
+                        {"items": [f"Товар «{product.name}» недоступен (нет остатка)."]}
+                    )
+
             product_name = product.name if product else item_data.get("product_name", "Товар")
             unit_price = item_data.get("unit_price")
             if unit_price is None and product:
                 unit_price = product.price
+
             OrderItem.objects.create(
                 order=order,
                 product=product,
                 product_name=product_name,
-                quantity=item_data.get("quantity", 1),
+                quantity=qty,
                 unit_price=unit_price or 0,
             )
-            if product and item_data.get("quantity"):
-                product.stock = max(0, product.stock - item_data["quantity"])
-                product.save(update_fields=["stock"])
+            if product:
+                product.stock = max(0, product.stock - qty)
+                # Zero stock → deactivate automatically
+                fields = ["stock"]
+                if product.stock == 0:
+                    product.is_active = False
+                    fields.append("is_active")
+                product.save(update_fields=fields)
+
         order.recalculate_total()
         return order
 
-    def update(self, instance, validated_data):
-        items_data = validated_data.pop("items", None)
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-        if items_data is not None:
-            instance.items.all().delete()
+    def create(self, validated_data):
+        items_data = validated_data.pop("items")
+        workspace = self.context["workspace"]
+        # Cancelled orders do not reserve stock
+        status = validated_data.get("status")
+        order = Order.objects.create(workspace=workspace, **validated_data)
+        if status == Order.Status.CANCELLED:
             for item_data in items_data:
                 product = item_data.get("product")
                 product_name = product.name if product else item_data.get("product_name", "Товар")
@@ -117,13 +172,41 @@ class OrderSerializer(serializers.ModelSerializer):
                 if unit_price is None and product:
                     unit_price = product.price
                 OrderItem.objects.create(
-                    order=instance,
+                    order=order,
                     product=product,
                     product_name=product_name,
                     quantity=item_data.get("quantity", 1),
                     unit_price=unit_price or 0,
                 )
-            instance.recalculate_total()
+            order.recalculate_total()
+            return order
+        return self._apply_items(order, items_data)
+
+    def update(self, instance, validated_data):
+        items_data = validated_data.pop("items", None)
+        old_status = instance.status
+        new_status = validated_data.get("status", old_status)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # Transition to cancelled: restore stock
+        if old_status != Order.Status.CANCELLED and new_status == Order.Status.CANCELLED:
+            for old in instance.items.select_related("product"):
+                if old.product_id and old.product:
+                    old.product.stock += old.quantity
+                    if old.product.stock > 0:
+                        old.product.is_active = True
+                    old.product.save(update_fields=["stock", "is_active"])
+            # Cancelled paid orders are not revenue (handled in analytics)
+            if instance.payment_status == Order.PaymentStatus.PAID:
+                instance.payment_status = Order.PaymentStatus.REFUNDED
+                instance.save(update_fields=["payment_status", "updated_at"])
+            return instance
+
+        if items_data is not None and new_status != Order.Status.CANCELLED:
+            return self._apply_items(instance, items_data, restore_stock=True)
         return instance
 
 

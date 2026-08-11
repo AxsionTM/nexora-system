@@ -10,7 +10,9 @@ export interface AIMessage {
 export interface ChatResponse {
   conversation_id: number;
   message: AIMessage;
-  provider: "gemini" | "openai" | "fallback";
+  provider: "gemini" | "openai" | "fallback" | "error";
+  error?: string | null;
+  context_generated_at?: string;
   insights: string[];
 }
 

@@ -2,6 +2,9 @@ export type Period = "7D" | "30D" | "3M" | "6M" | "1Y";
 
 export interface DashboardSummary {
   period: Period;
+  period_label?: string;
+  cancelled_orders?: number;
+  cancelled_amount?: string;
   revenue: string;
   revenue_change: number;
   orders: number;

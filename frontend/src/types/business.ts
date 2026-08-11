@@ -144,12 +144,14 @@ export interface NotificationsResponse {
 }
 
 export type IntegrationProvider =
-  | "stripe"
-  | "shopify"
-  | "paypal"
-  | "woocommerce"
-  | "google_analytics"
-  | "slack";
+  | "telegram"
+  | "email"
+  | "webhook"
+  | "google_sheets"
+  | "csv_export"
+  | "discord"
+  | "slack"
+  | "google_analytics";
 
 export type IntegrationStatus = "connected" | "disconnected" | "error";
 
@@ -161,6 +163,8 @@ export interface Integration {
   status_display: string;
   connected_at: string | null;
   updated_at: string | null;
+  description?: string;
+  is_free?: boolean;
 }
 
 export type PaymentStatusType = "pending" | "success" | "failed" | "refunded";

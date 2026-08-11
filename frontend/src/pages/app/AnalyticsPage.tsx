@@ -16,7 +16,13 @@ import * as analyticsApi from "@/services/analytics";
 import type { Period } from "@/types/analytics";
 import { cn } from "@/lib/utils";
 
-const PERIODS: Period[] = ["7D", "30D", "3M", "6M", "1Y"];
+const PERIODS: { key: Period; label: string }[] = [
+  { key: "7D", label: "7 дней" },
+  { key: "30D", label: "30 дней" },
+  { key: "3M", label: "3 мес." },
+  { key: "6M", label: "6 мес." },
+  { key: "1Y", label: "1 год" },
+];
 
 function formatMoney(v: string | number) {
   const n = typeof v === "string" ? Number(v) : v;
@@ -66,15 +72,15 @@ export default function AnalyticsPage() {
         <div className="flex gap-1 rounded-lg border border-border bg-surface p-0.5">
           {PERIODS.map((p) => (
             <button
-              key={p}
+              key={p.key}
               type="button"
-              onClick={() => setPeriod(p)}
+              onClick={() => setPeriod(p.key)}
               className={cn(
                 "rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
-                period === p ? "bg-accent/10 text-accent" : "text-muted hover:text-foreground"
+                period === p.key ? "bg-accent/10 text-accent" : "text-muted hover:text-foreground"
               )}
             >
-              {p}
+              {p.label}
             </button>
           ))}
         </div>

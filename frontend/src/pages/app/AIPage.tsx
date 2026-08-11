@@ -100,7 +100,7 @@ export default function AIPage() {
               <p className="text-[11px] text-muted">
                 Вопросы о выручке, прибыли, товарах и заказах
                 {provider && (
-                  <> · режим: {provider === "gemini" ? "Gemini" : provider === "openai" ? "OpenAI" : "локальный"}</>
+                  <> · {provider === "gemini" ? "Gemini 2.5 Flash" : provider === "error" ? "ошибка API" : provider}</>
                 )}
               </p>
             </div>

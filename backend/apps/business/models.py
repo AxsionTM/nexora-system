@@ -221,12 +221,14 @@ class Notification(models.Model):
 
 class Integration(models.Model):
     class Provider(models.TextChoices):
-        STRIPE = "stripe", "Stripe"
-        SHOPIFY = "shopify", "Shopify"
-        PAYPAL = "paypal", "PayPal"
-        WOOCOMMERCE = "woocommerce", "WooCommerce"
-        GOOGLE_ANALYTICS = "google_analytics", "Google Analytics"
+        TELEGRAM = "telegram", "Telegram-бот"
+        EMAIL = "email", "Email (SMTP)"
+        WEBHOOK = "webhook", "Webhooks"
+        GOOGLE_SHEETS = "google_sheets", "Google Sheets"
+        CSV_EXPORT = "csv_export", "CSV-экспорт"
+        DISCORD = "discord", "Discord"
         SLACK = "slack", "Slack"
+        GOOGLE_ANALYTICS = "google_analytics", "Google Analytics"
 
     class Status(models.TextChoices):
         CONNECTED = "connected", "Подключено"

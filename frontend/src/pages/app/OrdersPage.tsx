@@ -259,17 +259,42 @@ export default function OrdersPage() {
             <label className="mb-1.5 block text-sm font-medium">Товар</label>
             <select className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm" value={productId} onChange={(e) => setProductId(e.target.value)}>
               <option value="">Выберите товар</option>
-              {products.map((p: Product) => (
-                <option key={p.id} value={p.id}>{p.name} — ${p.price}</option>
+              {products
+                .filter((p: Product) => p.is_active && p.stock > 0)
+                .map((p: Product) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} — ${p.price} (остаток: {p.stock})
+                </option>
               ))}
             </select>
           </div>
-          <Input label="Количество" type="number" min={1} value={qty} onChange={(e) => setQty(Number(e.target.value) || 1)} />
+          {(() => {
+            const selected = products.find((p: Product) => String(p.id) === productId);
+            const maxQty = selected?.stock ?? 1;
+            return (
+              <div>
+                <Input
+                  label={`Количество${selected ? ` (макс. ${maxQty})` : ""}`}
+                  type="number"
+                  min={1}
+                  max={maxQty}
+                  value={qty}
+                  onChange={(e) => {
+                    const v = Number(e.target.value) || 1;
+                    setQty(Math.min(Math.max(1, v), maxQty));
+                  }}
+                />
+                {selected && qty > selected.stock && (
+                  <p className="mt-1 text-xs text-danger">Не больше остатка на складе</p>
+                )}
+              </div>
+            );
+          })()}
           <Input label="Заметки" value={notes} onChange={(e) => setNotes(e.target.value)} />
           {saveMutation.isError && <p className="text-sm text-danger">Не удалось сохранить заказ.</p>}
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="secondary" onClick={closeModal}>Отмена</Button>
-            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !productId}>
+            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !productId || (() => { const s = products.find((p: Product) => String(p.id) === productId); return s ? qty > s.stock || s.stock <= 0 : true; })()}>
               {saveMutation.isPending ? "Сохранение..." : "Сохранить"}
             </Button>
           </div>

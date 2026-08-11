@@ -20,7 +20,13 @@ import { ORDER_STATUS_LABELS } from "@/types/business";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 
-const PERIODS: Period[] = ["7D", "30D", "3M", "6M", "1Y"];
+const PERIODS: { key: Period; label: string }[] = [
+  { key: "7D", label: "7 дней" },
+  { key: "30D", label: "30 дней" },
+  { key: "3M", label: "3 мес." },
+  { key: "6M", label: "6 мес." },
+  { key: "1Y", label: "1 год" },
+];
 
 function formatMoney(value: string | number) {
   const n = typeof value === "string" ? Number(value) : value;
@@ -115,17 +121,17 @@ export default function DashboardPage() {
         <div className="flex gap-1 rounded-lg border border-border bg-surface p-0.5">
           {PERIODS.map((p) => (
             <button
-              key={p}
+              key={p.key}
               type="button"
-              onClick={() => setPeriod(p)}
+              onClick={() => setPeriod(p.key)}
               className={cn(
                 "rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors",
-                period === p
+                period === p.key
                   ? "bg-accent/10 text-accent"
                   : "text-muted hover:text-foreground"
               )}
             >
-              {p}
+              {p.label}
             </button>
           ))}
         </div>
@@ -171,6 +177,27 @@ export default function DashboardPage() {
               {formatMoney(s.average_order_value)}
             </span>
           </span>
+          {"cancelled_orders" in s && (
+            <span>
+              Отмены:{" "}
+              <span className="font-medium text-foreground">
+                {(s as { cancelled_orders?: number }).cancelled_orders ?? 0}
+              </span>
+              {"cancelled_amount" in s && (
+                <>
+                  {" "}
+                  (
+                  {formatMoney(
+                    String((s as { cancelled_amount?: string }).cancelled_amount || 0)
+                  )}
+                  )
+                </>
+              )}
+            </span>
+          )}
+          {s.period_label && (
+            <span className="text-xs">Период: {s.period_label}</span>
+          )}
         </div>
       )}
 

@@ -154,6 +154,10 @@ export default function TeamPage() {
           <li><span className="font-medium text-foreground">Менеджер</span> — заказы, клиенты, товары, аналитика</li>
           <li><span className="font-medium text-foreground">Сотрудник</span> — ограниченный доступ</li>
         </ul>
+        <p className="mt-3 text-xs text-muted">
+          Менять роли и приглашать могут только владелец и админ. Админ не может назначать
+          других админов или менять свою роль. Владельца удалить нельзя.
+        </p>
       </div>
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Пригласить участника">

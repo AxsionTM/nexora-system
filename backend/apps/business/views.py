@@ -261,6 +261,21 @@ class AnalyticsExpensesByCategoryView(CurrentWorkspaceMixin, APIView):
         return Response(expenses_by_category(workspace, period))
 
 
+ROLE_RANK = {
+    "owner": 4,
+    "admin": 3,
+    "manager": 2,
+    "employee": 1,
+}
+
+
+def _member_role(workspace, user):
+    if workspace.owner_id == user.id:
+        return WorkspaceMember.Role.OWNER
+    m = WorkspaceMember.objects.filter(workspace=workspace, user=user).first()
+    return m.role if m else None
+
+
 class TeamMemberViewSet(CurrentWorkspaceMixin, viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
@@ -274,7 +289,7 @@ class TeamMemberViewSet(CurrentWorkspaceMixin, viewsets.ViewSet):
         return Response(WorkspaceMemberSerializer(members, many=True).data)
 
     def create(self, request):
-        """Invite member by email (creates user stub if needed, or links existing)."""
+        """Invite member by email. Only owner/admin can invite; cannot grant higher/equal role than self."""
         from django.contrib.auth import get_user_model
         from .serializers import InviteMemberSerializer, WorkspaceMemberSerializer
         from .models import Notification
@@ -283,6 +298,13 @@ class TeamMemberViewSet(CurrentWorkspaceMixin, viewsets.ViewSet):
         workspace = self.get_workspace()
         if not workspace:
             return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        actor_role = _member_role(workspace, request.user)
+        if actor_role not in (WorkspaceMember.Role.OWNER, WorkspaceMember.Role.ADMIN):
+            return Response(
+                {"detail": "Приглашать участников могут только владелец и админ."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         serializer = InviteMemberSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -295,6 +317,18 @@ class TeamMemberViewSet(CurrentWorkspaceMixin, viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # Cannot assign a role >= own rank (admin cannot create another admin)
+        if ROLE_RANK.get(role, 0) >= ROLE_RANK.get(actor_role, 0) and actor_role != WorkspaceMember.Role.OWNER:
+            return Response(
+                {"role": ["Нельзя назначить роль равную или выше своей."]},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        if actor_role == WorkspaceMember.Role.ADMIN and role == WorkspaceMember.Role.ADMIN:
+            return Response(
+                {"role": ["Админ не может назначать других админов."]},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         user, created = User.objects.get_or_create(
             email=email,
             defaults={"first_name": email.split("@")[0]},
@@ -302,6 +336,12 @@ class TeamMemberViewSet(CurrentWorkspaceMixin, viewsets.ViewSet):
         if created:
             user.set_unusable_password()
             user.save()
+
+        if user.id == request.user.id:
+            return Response(
+                {"email": ["Нельзя пригласить самого себя."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         member, member_created = WorkspaceMember.objects.get_or_create(
             workspace=workspace,
@@ -338,17 +378,52 @@ class TeamMemberViewSet(CurrentWorkspaceMixin, viewsets.ViewSet):
         except WorkspaceMember.DoesNotExist:
             return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
 
+        actor_role = _member_role(workspace, request.user)
+        if actor_role not in (WorkspaceMember.Role.OWNER, WorkspaceMember.Role.ADMIN):
+            return Response(
+                {"detail": "Менять роли могут только владелец и админ."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         if member.role == WorkspaceMember.Role.OWNER:
             return Response(
                 {"role": ["Роль владельца нельзя изменить."]},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        # Cannot change own role (prevent self-promotion / self-demotion games)
+        if member.user_id == request.user.id:
+            return Response(
+                {"role": ["Нельзя изменить свою собственную роль."]},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # Admin cannot modify another admin
+        if (
+            actor_role == WorkspaceMember.Role.ADMIN
+            and member.role == WorkspaceMember.Role.ADMIN
+        ):
+            return Response(
+                {"role": ["Админ не может менять роль другого админа."]},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         role = request.data.get("role")
         if role and role in dict(WorkspaceMember.Role.choices):
             if role == WorkspaceMember.Role.OWNER:
                 return Response(
                     {"role": ["Нельзя назначить роль владельца."]},
                     status=status.HTTP_400_BAD_REQUEST,
+                )
+            if ROLE_RANK.get(role, 0) >= ROLE_RANK.get(actor_role, 0) and actor_role != WorkspaceMember.Role.OWNER:
+                return Response(
+                    {"role": ["Нельзя назначить роль равную или выше своей."]},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            if actor_role == WorkspaceMember.Role.ADMIN and role == WorkspaceMember.Role.ADMIN:
+                return Response(
+                    {"role": ["Админ не может назначать других админов."]},
+                    status=status.HTTP_403_FORBIDDEN,
                 )
             member.role = role
             member.save(update_fields=["role"])
@@ -363,10 +438,30 @@ class TeamMemberViewSet(CurrentWorkspaceMixin, viewsets.ViewSet):
         except WorkspaceMember.DoesNotExist:
             return Response({"detail": "Not found"}, status=status.HTTP_404_NOT_FOUND)
 
+        actor_role = _member_role(workspace, request.user)
+        if actor_role not in (WorkspaceMember.Role.OWNER, WorkspaceMember.Role.ADMIN):
+            return Response(
+                {"detail": "Удалять участников могут только владелец и админ."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         if member.role == WorkspaceMember.Role.OWNER:
             return Response(
                 {"detail": "Нельзя удалить владельца."},
                 status=status.HTTP_400_BAD_REQUEST,
+            )
+        if member.user_id == request.user.id:
+            return Response(
+                {"detail": "Нельзя удалить самого себя."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        if (
+            actor_role == WorkspaceMember.Role.ADMIN
+            and ROLE_RANK.get(member.role, 0) >= ROLE_RANK["admin"]
+        ):
+            return Response(
+                {"detail": "Админ не может удалить другого админа."},
+                status=status.HTTP_403_FORBIDDEN,
             )
         member.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -425,6 +520,42 @@ class MarkAllNotificationsReadView(CurrentWorkspaceMixin, APIView):
         return Response({"marked": updated})
 
 
+INTEGRATION_META = {
+    "telegram": {
+        "description": "Уведомления о заказах и низких остатках в Telegram (бесплатно через Bot API).",
+        "free": True,
+    },
+    "email": {
+        "description": "Письма клиентам и команде через ваш SMTP (Gmail, Yandex и др.).",
+        "free": True,
+    },
+    "webhook": {
+        "description": "Исходящие webhook при новом заказе / оплате — для n8n, Make, своих скриптов.",
+        "free": True,
+    },
+    "google_sheets": {
+        "description": "Выгрузка заказов и товаров в Google Таблицы (бесплатный API Google).",
+        "free": True,
+    },
+    "csv_export": {
+        "description": "Быстрый экспорт данных workspace в CSV без сторонних сервисов.",
+        "free": True,
+    },
+    "discord": {
+        "description": "Алерты в канал Discord через Incoming Webhook (бесплатно).",
+        "free": True,
+    },
+    "slack": {
+        "description": "Уведомления в Slack workspace (бесплатный план Slack).",
+        "free": True,
+    },
+    "google_analytics": {
+        "description": "Связка метрик сайта с бизнес-KPI (GA4 Measurement Protocol).",
+        "free": True,
+    },
+}
+
+
 class IntegrationListView(CurrentWorkspaceMixin, APIView):
     """List all known providers with connection status for the workspace."""
 
@@ -433,7 +564,6 @@ class IntegrationListView(CurrentWorkspaceMixin, APIView):
     def get(self, request):
         from .models import Integration
         from .serializers import IntegrationSerializer
-        from django.utils import timezone
 
         workspace = self.get_workspace()
         if not workspace:
@@ -445,20 +575,22 @@ class IntegrationListView(CurrentWorkspaceMixin, APIView):
         }
         result = []
         for value, label in Integration.Provider.choices:
+            meta = INTEGRATION_META.get(value, {})
             if value in existing:
-                result.append(IntegrationSerializer(existing[value]).data)
+                data = IntegrationSerializer(existing[value]).data
             else:
-                result.append(
-                    {
-                        "id": None,
-                        "provider": value,
-                        "provider_display": label,
-                        "status": Integration.Status.DISCONNECTED,
-                        "status_display": "Отключено",
-                        "connected_at": None,
-                        "updated_at": None,
-                    }
-                )
+                data = {
+                    "id": None,
+                    "provider": value,
+                    "provider_display": label,
+                    "status": Integration.Status.DISCONNECTED,
+                    "status_display": "Отключено",
+                    "connected_at": None,
+                    "updated_at": None,
+                }
+            data["description"] = meta.get("description", "")
+            data["is_free"] = meta.get("free", True)
+            result.append(data)
         return Response(result)
 
 
@@ -701,7 +833,9 @@ class AIChatView(CurrentWorkspaceMixin, APIView):
                 "conversation_id": conversation.id,
                 "message": AIMessageSerializer(assistant_msg).data,
                 "provider": result["provider"],
+                "error": result.get("error"),
                 "insights": result["insights"],
+                "context_generated_at": result.get("context_generated_at"),
             }
         )
 
