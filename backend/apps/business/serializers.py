@@ -90,7 +90,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    items = OrderItemSerializer(many=True)
+    items = OrderItemSerializer(many=True, required=False)
     customer_name = serializers.CharField(source="customer.name", read_only=True, default=None)
 
     class Meta:
@@ -154,6 +154,27 @@ class OrderSerializer(serializers.ModelSerializer):
                     product.is_active = False
                     fields.append("is_active")
                 product.save(update_fields=fields)
+                # Low stock alert (threshold 10)
+                if product.stock <= 10:
+                    try:
+                        from .notify import notify_event
+                        from .models import Notification
+                        notify_event(
+                            order.workspace,
+                            title="Низкий остаток",
+                            message=f"«{product.name}»: осталось {product.stock} шт. (порог 10)",
+                            event="stock.low",
+                            extra={"product_id": product.id, "stock": product.stock},
+                        )
+                        Notification.objects.create(
+                            workspace=order.workspace,
+                            type="stock",
+                            title="Низкий остаток",
+                            message=f"«{product.name}»: осталось {product.stock} шт.",
+                            link="/products",
+                        )
+                    except Exception:
+                        pass
 
         order.recalculate_total()
         return order
@@ -225,7 +246,13 @@ class OrderSerializer(serializers.ModelSerializer):
                 instance.save(update_fields=["payment_status", "updated_at"])
             return instance
 
-        if items_data is not None and new_status != Order.Status.CANCELLED:
+        # Only rewrite line items when client sends a non-empty items list.
+        # Status/payment-only updates must not touch stock.
+        if (
+            items_data is not None
+            and len(items_data) > 0
+            and new_status != Order.Status.CANCELLED
+        ):
             return self._apply_items(instance, items_data, restore_stock=True)
         return instance
 

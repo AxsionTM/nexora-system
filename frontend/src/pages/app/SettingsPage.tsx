@@ -494,13 +494,24 @@ export default function SettingsPage() {
   const [securityMsg, setSecurityMsg] = useState("");
   const [securityError, setSecurityError] = useState("");
 
-  const [notifPrefs, setNotifPrefs] = useState({
+  const NOTIF_KEY = "nexora-notif-prefs";
+  const defaultNotif = {
     orders: true,
     payments: true,
     stock: true,
     team: true,
     reports: false,
+  };
+  const [notifPrefs, setNotifPrefs] = useState(() => {
+    try {
+      const raw = localStorage.getItem(NOTIF_KEY);
+      if (raw) return { ...defaultNotif, ...JSON.parse(raw) };
+    } catch {
+      /* ignore */
+    }
+    return defaultNotif;
   });
+  const [notifSaved, setNotifSaved] = useState(false);
 
   const integrationsQ = useQuery({
     queryKey: ["integrations", workspace?.id],
@@ -732,6 +743,24 @@ export default function SettingsPage() {
                   </li>
                 ))}
               </ul>
+              <div className="mt-5 flex items-center gap-3">
+                <Button
+                  type="button"
+                  onClick={() => {
+                    localStorage.setItem(NOTIF_KEY, JSON.stringify(notifPrefs));
+                    setNotifSaved(true);
+                    setTimeout(() => setNotifSaved(false), 2000);
+                  }}
+                >
+                  Сохранить
+                </Button>
+                {notifSaved && (
+                  <span className="text-sm text-success">Сохранено</span>
+                )}
+              </div>
+              <p className="mt-2 text-xs text-muted">
+                Настройки колокольчика хранятся в этом браузере.
+              </p>
             </div>
           )}
 

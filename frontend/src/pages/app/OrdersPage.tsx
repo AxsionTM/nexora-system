@@ -56,20 +56,48 @@ export default function OrdersPage() {
     queryFn: () => api.listCustomers({ workspace: workspace?.id }),
   });
 
+  const quickUpdateMutation = useMutation({
+    mutationFn: ({
+      id,
+      status,
+      payment_status,
+    }: {
+      id: number;
+      status?: string;
+      payment_status?: string;
+    }) => api.updateOrder(id, { status, payment_status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["analytics-summary"] });
+    },
+  });
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       const product = products.find((p) => String(p.id) === productId);
-      const items = product
-        ? [{ product: product.id, product_name: product.name, quantity: qty, unit_price: product.price }]
-        : [];
       if (editing) {
-        return api.updateOrder(editing.id, {
+        // Status/payment/notes can be updated without re-sending items
+        const payload: Record<string, unknown> = {
           customer: customerId ? Number(customerId) : null,
           status,
           payment_status: paymentStatus,
           notes,
-          items,
-        });
+        };
+        // Only change line items if user explicitly selected a product
+        if (productId && product) {
+          payload.items = [
+            {
+              product: product.id,
+              product_name: product.name,
+              quantity: qty,
+              unit_price: product.price,
+            },
+          ];
+        }
+        return api.updateOrder(editing.id, payload);
+      }
+      if (!product) {
+        throw new Error("Выберите товар");
       }
       return api.createOrder(
         {
@@ -77,7 +105,14 @@ export default function OrdersPage() {
           status,
           payment_status: paymentStatus,
           notes,
-          items,
+          items: [
+            {
+              product: product.id,
+              product_name: product.name,
+              quantity: qty,
+              unit_price: product.price,
+            },
+          ],
         },
         workspace?.id
       );
@@ -203,7 +238,37 @@ export default function OrdersPage() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
-                      <button type="button" onClick={() => openEdit(o)} className="rounded p-1.5 text-muted hover:bg-surface hover:text-foreground">
+                      <select
+                        className="h-8 max-w-[120px] rounded-md border border-border bg-background px-1 text-xs"
+                        value={o.status}
+                        title="Сменить статус"
+                        onChange={(e) =>
+                          quickUpdateMutation.mutate({
+                            id: o.id,
+                            status: e.target.value,
+                          })
+                        }
+                      >
+                        {Object.entries(ORDER_STATUS_LABELS).map(([k, v]) => (
+                          <option key={k} value={k}>{v}</option>
+                        ))}
+                      </select>
+                      <select
+                        className="h-8 max-w-[110px] rounded-md border border-border bg-background px-1 text-xs"
+                        value={o.payment_status}
+                        title="Сменить оплату"
+                        onChange={(e) =>
+                          quickUpdateMutation.mutate({
+                            id: o.id,
+                            payment_status: e.target.value,
+                          })
+                        }
+                      >
+                        {Object.entries(PAYMENT_STATUS_LABELS).map(([k, v]) => (
+                          <option key={k} value={k}>{v}</option>
+                        ))}
+                      </select>
+                      <button type="button" onClick={() => openEdit(o)} className="rounded p-1.5 text-muted hover:bg-surface hover:text-foreground" title="Редактировать">
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
                       <button
@@ -258,15 +323,23 @@ export default function OrdersPage() {
           <div>
             <label className="mb-1.5 block text-sm font-medium">Товар</label>
             <select className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm" value={productId} onChange={(e) => setProductId(e.target.value)}>
-              <option value="">Выберите товар</option>
+              <option value="">{editing ? "Не менять состав заказа" : "Выберите товар"}</option>
               {products
-                .filter((p: Product) => p.is_active && p.stock > 0)
+                .filter((p: Product) => {
+                  if (editing && productId && String(p.id) === productId) return true;
+                  return p.is_active && p.stock > 0;
+                })
                 .map((p: Product) => (
                 <option key={p.id} value={p.id}>
                   {p.name} — ${p.price} (остаток: {p.stock})
                 </option>
               ))}
             </select>
+            {editing && (
+              <p className="mt-1 text-xs text-muted">
+                Чтобы только сменить статус или оплату — оставьте «Не менять состав заказа».
+              </p>
+            )}
           </div>
           {(() => {
             const selected = products.find((p: Product) => String(p.id) === productId);
@@ -294,7 +367,21 @@ export default function OrdersPage() {
           {saveMutation.isError && <p className="text-sm text-danger">Не удалось сохранить заказ.</p>}
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="secondary" onClick={closeModal}>Отмена</Button>
-            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !productId || (() => { const s = products.find((p: Product) => String(p.id) === productId); return s ? qty > s.stock || s.stock <= 0 : true; })()}>
+            <Button
+              onClick={() => saveMutation.mutate()}
+              disabled={
+                saveMutation.isPending ||
+                (!editing && !productId) ||
+                (() => {
+                  if (!productId) return false; // edit without changing items
+                  const s = products.find((p: Product) => String(p.id) === productId);
+                  if (!s) return true;
+                  // when editing existing line, allow same product even if stock 0
+                  if (editing) return qty < 1;
+                  return qty > s.stock || s.stock <= 0;
+                })()
+              }
+            >
               {saveMutation.isPending ? "Сохранение..." : "Сохранить"}
             </Button>
           </div>
