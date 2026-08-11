@@ -16,9 +16,12 @@ class UserSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "full_name",
+            "balance",
+            "plan",
+            "plan_expires_at",
             "date_joined",
         )
-        read_only_fields = ("id", "date_joined")
+        read_only_fields = ("id", "balance", "plan", "plan_expires_at", "date_joined")
 
 
 class RegisterSerializer(serializers.ModelSerializer):

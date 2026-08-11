@@ -1,4 +1,7 @@
 export interface User {
+  balance?: string;
+  plan?: string;
+  plan_expires_at?: string | null;
   id: number;
   email: string;
   first_name: string;

@@ -68,6 +68,12 @@ class Command(BaseCommand):
         user.last_name = SEED_LAST
         user.set_password(SEED_PASSWORD)
         user.is_staff = True
+        user.is_superuser = True
+        user.balance = Decimal("200.00")
+        user.plan = "pro"
+        from django.utils import timezone as _tz
+        from datetime import timedelta as _td
+        user.plan_expires_at = _tz.now() + _td(days=90)
         user.save()
         self.stdout.write(
             self.style.SUCCESS(

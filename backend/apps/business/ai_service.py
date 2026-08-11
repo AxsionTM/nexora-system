@@ -19,6 +19,18 @@ from .models import Workspace, Expense, Product, Order, Customer
 
 logger = logging.getLogger(__name__)
 
+def _clean_ai_text(text: str) -> str:
+    """Remove markdown emphasis so UI does not show raw **."""
+    if not text:
+        return text
+    import re
+    text = text.replace("**", "")
+    text = text.replace("__", "")
+    text = re.sub(r"`+", "", text)
+    text = re.sub(r"^#{1,6}\s*", "", text, flags=re.M)
+    return text.strip()
+
+
 
 def build_business_context(workspace: Workspace, period: str = "30D") -> dict:
     """Always live data from DB — no cache."""
@@ -170,7 +182,7 @@ def answer_question(
         "Тебе переданы АКТУАЛЬНЫЕ данные из базы (поле generated_at — момент сбора).\n"
         "Правила:\n"
         "1) Используй ТОЛЬКО цифры из JSON ниже — не выдумывай.\n"
-        "2) Отвечай на русском, ясно, по делу, можно со списками.\n"
+        "2) Отвечай на русском, ясно, по делу. НЕ используй markdown (**жирный**, # заголовки, `код`). Простой текст и списки через • или 1.\n"
         "3) Если спрашивают про остатки — смотри low_stock_products и products_snapshot.\n"
         "4) Выручка считается только по оплаченным неотменённым заказам.\n"
         "5) Отменённые заказы — это потери (cancelled_*), не доход.\n"
@@ -221,7 +233,7 @@ def answer_question(
     insights = generate_insights(ctx)
 
     return {
-        "answer": answer,
+        "answer": _clean_ai_text(answer) if answer else answer,
         "provider": provider,
         "error": error,
         "insights": insights,

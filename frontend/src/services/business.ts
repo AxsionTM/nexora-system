@@ -6,6 +6,11 @@ export async function ensureWorkspace(name?: string) {
   return data;
 }
 
+export async function createWorkspace(name: string) {
+  const { data } = await api.post<Workspace>("/workspaces/", { name });
+  return data;
+}
+
 export async function listWorkspaces() {
   const { data } = await api.get<Workspace[]>("/workspaces/");
   return data;

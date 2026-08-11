@@ -30,6 +30,18 @@ class WorkspaceViewSet(viewsets.ModelViewSet):
         return get_user_workspaces(self.request.user)
 
     def perform_create(self, serializer):
+        from apps.users.plans import get_plan_limits
+        from .models import Workspace
+        from rest_framework.exceptions import PermissionDenied
+
+        limits = get_plan_limits(self.request.user)
+        owned = Workspace.objects.filter(owner=self.request.user).count()
+        max_ws = limits.get("max_workspaces") or 1
+        if owned >= max_ws:
+            raise PermissionDenied(
+                f"Лимит workspace по тарифу «{limits.get('name')}»: {max_ws}. "
+                "Улучшите подписку в Настройках → Биллинг."
+            )
         serializer.save()
 
 
@@ -305,6 +317,16 @@ class TeamMemberViewSet(CurrentWorkspaceMixin, viewsets.ViewSet):
                 {"detail": "Приглашать участников могут только владелец и админ."},
                 status=status.HTTP_403_FORBIDDEN,
             )
+        from apps.users.plans import get_plan_limits
+        limits = get_plan_limits(request.user)
+        max_team = limits.get("max_team_members")
+        if max_team is not None:
+            current = WorkspaceMember.objects.filter(workspace=workspace).count()
+            if current >= max_team:
+                return Response(
+                    {"detail": f"Лимит команды по тарифу: {max_team}."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
         serializer = InviteMemberSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -786,6 +808,14 @@ class AIChatView(CurrentWorkspaceMixin, APIView):
         workspace = self.get_workspace()
         if not workspace:
             return Response({"detail": "Workspace not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        from apps.users.plans import get_plan_limits
+        limits = get_plan_limits(request.user)
+        if not limits.get("ai_enabled"):
+            return Response(
+                {"detail": "AI-ассистент доступен на тарифах Pro и Бизнес. Оформите подписку в Настройках → Биллинг."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         serializer = AIChatSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

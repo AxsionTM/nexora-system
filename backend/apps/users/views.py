@@ -1,3 +1,4 @@
+from rest_framework import status
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_bytes, force_str
@@ -8,6 +9,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from rest_framework.permissions import IsAdminUser
+from .models import WalletTransaction, SubscriptionHistory
+from .plans import PLANS, get_plan_limits, get_effective_plan
+from .billing import purchase_plan, credit_balance, admin_set_plan
 from .serializers import (
     ChangePasswordSerializer,
     PasswordResetConfirmSerializer,
@@ -120,3 +125,140 @@ class PasswordResetConfirmView(APIView):
         user.set_password(data["new_password"])
         user.save()
         return Response({"message": "Пароль успешно сброшен. Теперь вы можете войти."})
+
+
+
+
+class WalletView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        limits = get_plan_limits(user)
+        txs = WalletTransaction.objects.filter(user=user)[:30]
+        subs = SubscriptionHistory.objects.filter(user=user)[:20]
+        return Response(
+            {
+                "balance": str(user.balance),
+                "plan": get_effective_plan(user),
+                "plan_expires_at": user.plan_expires_at.isoformat() if user.plan_expires_at else None,
+                "limits": {
+                    "max_workspaces": limits["max_workspaces"],
+                    "max_team_members": limits["max_team_members"],
+                    "max_orders_per_month": limits["max_orders_per_month"],
+                    "ai_enabled": limits["ai_enabled"],
+                    "name": limits["name"],
+                    "price": str(limits["price"]),
+                    "features": limits["features"],
+                },
+                "transactions": [
+                    {
+                        "id": t.id,
+                        "type": t.type,
+                        "type_display": t.get_type_display(),
+                        "amount": str(t.amount),
+                        "balance_after": str(t.balance_after),
+                        "description": t.description,
+                        "created_at": t.created_at.isoformat(),
+                    }
+                    for t in txs
+                ],
+                "subscriptions": [
+                    {
+                        "id": s.id,
+                        "plan": s.plan,
+                        "price": str(s.price),
+                        "starts_at": s.starts_at.isoformat(),
+                        "ends_at": s.ends_at.isoformat() if s.ends_at else None,
+                        "note": s.note,
+                        "created_at": s.created_at.isoformat(),
+                    }
+                    for s in subs
+                ],
+            }
+        )
+
+
+class PlansListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response(
+            [
+                {
+                    "code": code,
+                    "name": p["name"],
+                    "price": str(p["price"]),
+                    "max_workspaces": p["max_workspaces"],
+                    "max_team_members": p["max_team_members"],
+                    "max_orders_per_month": p["max_orders_per_month"],
+                    "ai_enabled": p["ai_enabled"],
+                    "features": p["features"],
+                }
+                for code, p in PLANS.items()
+            ]
+        )
+
+
+class PurchasePlanView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        plan = request.data.get("plan")
+        months = int(request.data.get("months") or 1)
+        try:
+            result = purchase_plan(request.user, plan, months=months)
+        except ValueError as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(result)
+
+
+class AdminGrantView(APIView):
+    """Staff-only: grant balance or plan by email. Also available via /admin UI."""
+
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        from django.contrib.auth import get_user_model
+        from decimal import Decimal
+
+        User = get_user_model()
+        email = (request.data.get("email") or "").lower().strip()
+        if not email:
+            return Response({"detail": "Укажите email"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = User.objects.get(email__iexact=email)
+        except User.DoesNotExist:
+            return Response({"detail": "Пользователь не найден"}, status=status.HTTP_404_NOT_FOUND)
+
+        action = request.data.get("action")  # deposit | set_plan
+        if action == "deposit":
+            amount = Decimal(str(request.data.get("amount") or "0"))
+            if amount <= 0:
+                return Response({"detail": "Сумма должна быть > 0"}, status=status.HTTP_400_BAD_REQUEST)
+            tx = credit_balance(
+                user,
+                amount,
+                type=WalletTransaction.Type.ADJUSTMENT,
+                description=request.data.get("description") or "Пополнение администратором",
+                created_by=request.user,
+            )
+            return Response(
+                {"email": user.email, "balance": str(user.balance), "tx_id": tx.id}
+            )
+        if action == "set_plan":
+            plan = request.data.get("plan") or "free"
+            months = int(request.data.get("months") or 1)
+            try:
+                admin_set_plan(user, plan, months=months, note="Admin API grant", created_by=request.user)
+            except ValueError as e:
+                return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            user.refresh_from_db()
+            return Response(
+                {
+                    "email": user.email,
+                    "plan": user.plan,
+                    "plan_expires_at": user.plan_expires_at.isoformat() if user.plan_expires_at else None,
+                }
+            )
+        return Response({"detail": "action: deposit | set_plan"}, status=status.HTTP_400_BAD_REQUEST)

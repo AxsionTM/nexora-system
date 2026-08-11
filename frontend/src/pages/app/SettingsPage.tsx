@@ -64,6 +64,295 @@ const PLANS = [
   },
 ];
 
+
+
+function WorkspacePanel() {
+  const workspace = useWorkspaceStore((s) => s.workspace);
+  const workspaces = useWorkspaceStore((s) => s.workspaces);
+  const setWorkspace = useWorkspaceStore((s) => s.setWorkspace);
+  const refreshList = useWorkspaceStore((s) => s.refreshList);
+  const create = useWorkspaceStore((s) => s.create);
+  const [name, setName] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    refreshList().catch(() => {});
+  }, [refreshList]);
+
+  const onCreate = async () => {
+    if (!name.trim()) return;
+    setBusy(true);
+    setError("");
+    try {
+      await create(name.trim());
+      setName("");
+    } catch (e: unknown) {
+      const detail =
+        (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
+        "Не удалось создать workspace (проверьте лимит тарифа)";
+      setError(String(detail));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl border border-border bg-surface p-5 sm:p-6">
+        <h2 className="text-sm font-semibold">Ваши workspace</h2>
+        <p className="mt-1 text-xs text-muted">
+          Лимит числа компаний зависит от подписки (Настройки → Биллинг)
+        </p>
+        <ul className="mt-4 space-y-2">
+          {(workspaces.length ? workspaces : workspace ? [workspace] : []).map((w) => (
+            <li
+              key={w.id}
+              className={cn(
+                "flex items-center justify-between rounded-lg border px-3 py-2.5",
+                workspace?.id === w.id ? "border-accent/40 bg-accent/5" : "border-border bg-background"
+              )}
+            >
+              <div>
+                <p className="text-sm font-medium">{w.name}</p>
+                <p className="text-xs text-muted">{w.slug}</p>
+              </div>
+              {workspace?.id === w.id ? (
+                <Badge variant="accent">Текущий</Badge>
+              ) : (
+                <Button size="sm" variant="secondary" onClick={() => setWorkspace(w)}>
+                  Открыть
+                </Button>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="rounded-xl border border-border bg-surface p-5 sm:p-6">
+        <h2 className="text-sm font-semibold">Новый workspace</h2>
+        <div className="mt-4 max-w-md space-y-3">
+          <Input
+            label="Название компании / магазина"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Например, Мой магазин"
+          />
+          {error && <p className="text-sm text-danger">{error}</p>}
+          <Button onClick={onCreate} disabled={busy || !name.trim()}>
+            {busy ? "Создание..." : "Создать"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BillingPanel() {
+  const queryClient = useQueryClient();
+  const loadUser = useAuthStore((s) => s.loadUser);
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["wallet"],
+    queryFn: () => authApi.fetchWallet(),
+  });
+  const plansQ = useQuery({
+    queryKey: ["plans"],
+    queryFn: () => authApi.fetchPlans(),
+  });
+  const [months, setMonths] = useState(1);
+  const [msg, setMsg] = useState("");
+  const [err, setErr] = useState("");
+
+  const buy = useMutation({
+    mutationFn: (code: string) => authApi.purchasePlan(code, months),
+    onSuccess: async (res) => {
+      setMsg(`Подписка оформлена. Списано $${res.paid}. Баланс: $${res.balance}`);
+      setErr("");
+      await loadUser();
+      queryClient.invalidateQueries({ queryKey: ["wallet"] });
+    },
+    onError: (e: unknown) => {
+      const detail =
+        (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
+        "Не удалось оформить подписку";
+      setErr(String(detail));
+      setMsg("");
+    },
+  });
+
+  if (isLoading) return <p className="text-sm text-muted">Загрузка...</p>;
+  if (!data) return <p className="text-sm text-danger">Не удалось загрузить кошелёк</p>;
+
+  const planName =
+    plansQ.data?.find((p) => p.code === data.plan)?.name || data.limits?.name || data.plan;
+
+  return (
+    <>
+      <div className="rounded-xl border border-border bg-surface p-5 sm:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold">Кошелёк</h2>
+            <p className="mt-2 text-3xl font-semibold tracking-tight">
+              ${Number(data.balance).toLocaleString()}
+            </p>
+            <p className="mt-1 text-xs text-muted">
+              Пополнение — через администратора (Django /admin или staff API)
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-muted">Текущий план</p>
+            <p className="text-lg font-semibold">{planName}</p>
+            {data.plan_expires_at && (
+              <p className="text-xs text-muted">
+                до {new Date(data.plan_expires_at).toLocaleDateString("ru-RU")}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3 text-sm">
+          <div className="rounded-lg border border-border bg-background p-3">
+            <p className="text-xs text-muted">Workspace</p>
+            <p className="mt-1 font-medium">до {data.limits.max_workspaces}</p>
+          </div>
+          <div className="rounded-lg border border-border bg-background p-3">
+            <p className="text-xs text-muted">Команда</p>
+            <p className="mt-1 font-medium">
+              {data.limits.max_team_members == null
+                ? "без лимита"
+                : `до ${data.limits.max_team_members}`}
+            </p>
+          </div>
+          <div className="rounded-lg border border-border bg-background p-3">
+            <p className="text-xs text-muted">AI-ассистент</p>
+            <p className="mt-1 font-medium">{data.limits.ai_enabled ? "Да" : "Нет"}</p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm font-medium">Сменить план</p>
+          <select
+            className="h-9 rounded-lg border border-border bg-background px-2 text-sm"
+            value={months}
+            onChange={(e) => setMonths(Number(e.target.value))}
+          >
+            <option value={1}>1 месяц</option>
+            <option value={3}>3 месяца</option>
+            <option value={12}>12 месяцев</option>
+          </select>
+        </div>
+        {msg && <p className="mb-2 text-sm text-success">{msg}</p>}
+        {err && <p className="mb-2 text-sm text-danger">{err}</p>}
+        <div className="grid gap-3 lg:grid-cols-3">
+          {(plansQ.data || []).map((plan) => {
+            const active = data.plan === plan.code;
+            const total = Number(plan.price) * months;
+            return (
+              <div
+                key={plan.code}
+                className={cn(
+                  "flex flex-col rounded-xl border p-5",
+                  active ? "border-accent/40 bg-surface" : "border-border bg-surface"
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold">{plan.name}</h3>
+                  {active && <Badge variant="accent">Текущий</Badge>}
+                </div>
+                <p className="mt-2 text-2xl font-semibold">
+                  ${plan.price}
+                  {plan.code !== "free" && (
+                    <span className="text-sm font-normal text-muted">/мес</span>
+                  )}
+                </p>
+                <ul className="mt-4 flex-1 space-y-1.5 text-xs text-muted">
+                  {plan.features.map((f) => (
+                    <li key={f}>• {f}</li>
+                  ))}
+                </ul>
+                <Button
+                  className="mt-5 w-full"
+                  variant={active ? "secondary" : "primary"}
+                  size="sm"
+                  disabled={plan.code === "free" || buy.isPending}
+                  onClick={() => buy.mutate(plan.code)}
+                >
+                  {plan.code === "free"
+                    ? "Базовый"
+                    : active
+                      ? `Продлить ($${total})`
+                      : `Купить за $${total}`}
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-border bg-surface p-5">
+        <p className="text-sm font-medium">История кошелька</p>
+        {data.transactions.length === 0 ? (
+          <p className="mt-2 text-sm text-muted">Пока пусто</p>
+        ) : (
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-xs text-muted">
+                  <th className="pb-2 font-medium">Тип</th>
+                  <th className="pb-2 font-medium">Сумма</th>
+                  <th className="pb-2 font-medium">Баланс</th>
+                  <th className="pb-2 font-medium">Дата</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.transactions.map((t) => (
+                  <tr key={t.id} className="border-b border-border last:border-0">
+                    <td className="py-2.5">
+                      <span className="font-medium">{t.type_display}</span>
+                      {t.description && (
+                        <span className="block text-xs text-muted">{t.description}</span>
+                      )}
+                    </td>
+                    <td className="py-2.5">{Number(t.amount) > 0 ? "+" : ""}{t.amount}</td>
+                    <td className="py-2.5">${t.balance_after}</td>
+                    <td className="py-2.5 text-muted">
+                      {new Date(t.created_at).toLocaleString("ru-RU")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-xl border border-border bg-surface p-5">
+        <p className="text-sm font-medium">История подписок</p>
+        {data.subscriptions.length === 0 ? (
+          <p className="mt-2 text-sm text-muted">Пока пусто</p>
+        ) : (
+          <ul className="mt-3 space-y-2 text-sm">
+            {data.subscriptions.map((s) => (
+              <li
+                key={s.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2"
+              >
+                <span className="font-medium">{s.plan}</span>
+                <span className="text-muted">${s.price}</span>
+                <span className="text-xs text-muted">
+                  {new Date(s.starts_at).toLocaleDateString("ru-RU")}
+                  {s.ends_at && ` → ${new Date(s.ends_at).toLocaleDateString("ru-RU")}`}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </>
+  );
+}
+
+
 export default function SettingsPage() {
   const queryClient = useQueryClient();
   const workspace = useWorkspaceStore((s) => s.workspace);
@@ -105,8 +394,7 @@ export default function SettingsPage() {
   }, [workspace]);
 
   // Payments sandbox
-      const [currentPlan, setCurrentPlan] = useState<"free" | "pro" | "business">("pro");
-
+      
   const integrationsQ = useQuery({
     queryKey: ["integrations", workspace?.id],
     queryFn: async () => {
@@ -367,16 +655,10 @@ export default function SettingsPage() {
           )}
 
           {/* Workspace */}
-          {tab === "workspace" && (
-            <div className="rounded-xl border border-border bg-surface p-5 sm:p-6">
-              <h2 className="text-sm font-semibold">Workspace</h2>
-              <p className="mt-1 text-xs text-muted">Текущее рабочее пространство</p>
-              <div className="mt-5 max-w-md space-y-4">
-                <Input
-                  label="Название"
-                  value={wsName}
-                  onChange={(e) => setWsName(e.target.value)}
-                />
+                    {tab === "workspace" && (
+            <WorkspacePanel />
+          )}
+                
                 <div className="rounded-lg border border-border bg-background px-3 py-2 text-sm">
                   <p className="text-xs text-muted">Slug</p>
                   <p className="font-medium">{workspace?.slug || "—"}</p>
@@ -400,202 +682,108 @@ export default function SettingsPage() {
                 </p>
               </div>
             </div>
-          )}
+          )
 
-          {/* Integrations — existing */}
-          {tab === "integrations" && (
-            <div className="space-y-6">
-              <div className="rounded-xl border border-border bg-surface/50 px-4 py-3 text-sm text-muted">
-                Полезные <span className="font-medium text-foreground">бесплатные</span> интеграции
-                для уведомлений и экспорта. Подключение сохраняется в workspace;
-                настройки каналов (токен бота, SMTP и т.д.) можно добавить позже в config.
-              </div>
+                {/* Integrations — existing */}
+      {tab === "integrations" && (
+        <div className="space-y-6">
+          <div className="rounded-xl border border-border bg-surface/50 px-4 py-3 text-sm text-muted">
+            Полезные{" "}
+            <span className="font-medium text-foreground">бесплатные</span> интеграции
+            для уведомлений и экспорта. Подключение сохраняется в workspace;
+            настройки каналов (токен бота, SMTP и т.д.) можно добавить позже в config.
+          </div>
 
-              {connected.length > 0 && (
-                <div>
-                  <p className="mb-3 text-sm font-medium">Подключено</p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {connected.map((i: Integration) => (
-                      <div
-                        key={i.provider}
-                        className="flex items-center justify-between rounded-xl border border-border bg-surface p-4"
-                      >
-                        <div>
-                          <p className="text-sm font-medium">{i.provider_display}</p>
-                          {i.description && (
-                            <p className="mt-1 text-xs text-muted line-clamp-2">{i.description}</p>
-                          )}
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            <Badge variant="success">Подключено</Badge>
-                            {i.is_free && <Badge variant="default">Бесплатно</Badge>}
-                          </div>
-                        </div>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => disconnectM.mutate(i.provider)}
-                          disabled={disconnectM.isPending}
-                        >
-                          Отключить
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+          {connected.length > 0 && (
+            <div>
+              <p className="mb-3 text-sm font-medium">Подключено</p>
 
-              <div>
-                <p className="mb-3 text-sm font-medium">Доступно</p>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {available.map((i: Integration) => (
-                    <div
-                      key={i.provider}
-                      className="flex items-center justify-between rounded-xl border border-border bg-surface p-4"
-                    >
-                      <div>
-                        <p className="text-sm font-medium">{i.provider_display}</p>
-                        {i.description && (
-                          <p className="mt-1 text-xs text-muted line-clamp-2">{i.description}</p>
-                        )}
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          <span className="text-xs text-muted">Не подключено</span>
-                          {i.is_free && <Badge variant="default">Бесплатно</Badge>}
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        onClick={() => connectM.mutate(i.provider)}
-                        disabled={connectM.isPending}
-                      >
-                        Подключить
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+              <div className="grid gap-3 sm:grid-cols-2">
+                {connected.map((i: Integration) => (
+                  <div
+                    key={i.provider}
+                    className="flex items-center justify-between rounded-xl border border-border bg-surface p-4"
+                  >
+                    <div>
+                      <p className="text-sm font-medium">{i.provider_display}</p>
 
-          {tab === "billing" && (
-            <div className="space-y-6">
-              <div className="rounded-xl border border-border bg-surface p-5 sm:p-6">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h2 className="text-sm font-semibold">Текущий план</h2>
-                    <p className="mt-1 text-2xl font-semibold tracking-tight">
-                      {PLANS.find((p) => p.id === currentPlan)?.name}
-                    </p>
-                    <p className="mt-1 text-sm text-muted">
-                      {PLANS.find((p) => p.id === currentPlan)?.price}
-                      {currentPlan !== "free" && " / мес"}
-                    </p>
-                  </div>
-                  <Badge variant="accent">Sandbox UI</Badge>
-                </div>
-                <div className="mt-4 grid gap-3 sm:grid-cols-3 text-sm">
-                  <div className="rounded-lg border border-border bg-background p-3">
-                    <p className="text-xs text-muted">Использование</p>
-                    <p className="mt-1 font-medium">Заказы: без лимита (Pro)</p>
-                  </div>
-                  <div className="rounded-lg border border-border bg-background p-3">
-                    <p className="text-xs text-muted">Следующее списание</p>
-                    <p className="mt-1 font-medium">
-                      {new Date(
-                        Date.now() + 30 * 24 * 60 * 60 * 1000
-                      ).toLocaleDateString("ru-RU")}
-                    </p>
-                  </div>
-                  <div className="rounded-lg border border-border bg-background p-3">
-                    <p className="text-xs text-muted">Способ оплаты</p>
-                    <p className="mt-1 font-medium">•••• 4242 (тест)</p>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <p className="mb-3 text-sm font-medium">Сменить план</p>
-                <div className="grid gap-3 lg:grid-cols-3">
-                  {PLANS.map((plan) => (
-                    <div
-                      key={plan.id}
-                      className={cn(
-                        "flex flex-col rounded-xl border p-5",
-                        currentPlan === plan.id
-                          ? "border-accent/40 bg-surface shadow-glow"
-                          : "border-border bg-surface"
+                      {i.description && (
+                        <p className="mt-1 text-xs text-muted line-clamp-2">
+                          {i.description}
+                        </p>
                       )}
-                    >
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-semibold">{plan.name}</h3>
-                        {currentPlan === plan.id && (
-                          <Badge variant="accent">Текущий</Badge>
+
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        <Badge variant="success">Подключено</Badge>
+
+                        {i.is_free && (
+                          <Badge variant="default">Бесплатно</Badge>
                         )}
                       </div>
-                      <p className="mt-2 text-2xl font-semibold">
-                        {plan.price}
-                        {plan.id !== "free" && (
-                          <span className="text-sm font-normal text-muted">/мес</span>
-                        )}
-                      </p>
-                      <ul className="mt-4 flex-1 space-y-1.5 text-xs text-muted">
-                        {plan.features.map((f) => (
-                          <li key={f}>• {f}</li>
-                        ))}
-                      </ul>
-                      <Button
-                        className="mt-5 w-full"
-                        variant={currentPlan === plan.id ? "secondary" : "primary"}
-                        size="sm"
-                        disabled={currentPlan === plan.id}
-                        onClick={() => setCurrentPlan(plan.id as typeof currentPlan)}
-                      >
-                        {currentPlan === plan.id ? "Активен" : "Выбрать"}
-                      </Button>
                     </div>
-                  ))}
-                </div>
-              </div>
 
-              <div className="rounded-xl border border-border bg-surface p-5">
-                <p className="text-sm font-medium">Счета (демо)</p>
-                <div className="mt-3 overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border text-left text-xs text-muted">
-                        <th className="pb-2 font-medium">Номер</th>
-                        <th className="pb-2 font-medium">Дата</th>
-                        <th className="pb-2 font-medium">Сумма</th>
-                        <th className="pb-2 font-medium">Статус</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[
-                        { id: "INV-1042", date: "2026-07-10", amount: "$29.00", status: "Оплачен" },
-                        { id: "INV-1031", date: "2026-06-10", amount: "$29.00", status: "Оплачен" },
-                        { id: "INV-1020", date: "2026-05-10", amount: "$29.00", status: "Оплачен" },
-                      ].map((inv) => (
-                        <tr key={inv.id} className="border-b border-border last:border-0">
-                          <td className="py-2.5 font-medium">{inv.id}</td>
-                          <td className="py-2.5 text-muted">
-                            {new Date(inv.date).toLocaleDateString("ru-RU")}
-                          </td>
-                          <td className="py-2.5">{inv.amount}</td>
-                          <td className="py-2.5">
-                            <Badge variant="success">{inv.status}</Badge>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <p className="mt-3 text-xs text-muted">
-                  Реальные платежи не подключены — только UI для портфолио.
-                </p>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => disconnectM.mutate(i.provider)}
+                      disabled={disconnectM.isPending}
+                    >
+                      Отключить
+                    </Button>
+                  </div>
+                ))}
               </div>
             </div>
           )}
+
+          <div>
+            <p className="mb-3 text-sm font-medium">Доступно</p>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {available.map((i: Integration) => (
+                <div
+                  key={i.provider}
+                  className="flex items-center justify-between rounded-xl border border-border bg-surface p-4"
+                >
+                  <div>
+                    <p className="text-sm font-medium">{i.provider_display}</p>
+
+                    {i.description && (
+                      <p className="mt-1 text-xs text-muted line-clamp-2">
+                        {i.description}
+                      </p>
+                    )}
+
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      <span className="text-xs text-muted">
+                        Не подключено
+                      </span>
+
+                      {i.is_free && (
+                        <Badge variant="default">Бесплатно</Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  <Button
+                    size="sm"
+                    onClick={() => connectM.mutate(i.provider)}
+                    disabled={connectM.isPending}
+                  >
+                    Подключить
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {tab === "billing" && (
+        <div className="space-y-6">
+          <BillingPanel />
+        </div>
+      )}
     </div>
   );
 }
