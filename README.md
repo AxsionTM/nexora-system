@@ -1,245 +1,241 @@
 <p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=36&pause=1000&color=8A2BE2&center=true&vCenter=true&width=700&height=70&lines=NEXORA;Business+Manager;Analytics+%26+AI" alt="NEXORA animated title" />
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=32&pause=1000&color=8B7BFF&center=true&vCenter=true&width=600&height=60&lines=AI+CHAT+BOT;GEMINI+POWERED;TELEGRAM+MINI+APP" alt="AI Chat Bot animated title" />
 </p>
 
 <p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,14,20&height=120&section=header" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:8B7BFF,100:37E0C9&height=120&section=header" />
 </p>
-
----
-
-# ⚠️ ПРОЕКТ ЕЩЁ В РАЗРАБОТКЕ
 
 <p align="center">
-  <img src="https://img.shields.io/badge/%D0%A1%D0%A2%D0%90%D0%A2%D0%A3%D0%A1-IN%20PROGRESS-orange?style=for-the-badge" alt="In progress">
-  <img src="https://img.shields.io/badge/%D0%93%D0%9E%D0%A2%D0%9E%D0%92%D0%9D%D0%9E%D0%A1%D0%A2%D0%AC-~50%25-yellow?style=for-the-badge" alt="~50%">
+  <img src="https://wsrv.nl/?url=avatars.githubusercontent.com/u/146373364%3Fv%3D4&w=200&h=200&fit=cover&mask=circle" width="120">
 </p>
 
-> **ЭТО НЕ ГОТОВЫЙ ПРОДУКТ.**  
-> NEXORA находится **на стадии активной реализации**. Кодовая база **примерно наполовину сырая**:  
-> часть модулей уже работает end-to-end, часть — в процессе доработки, интеграции и биллинг ещё эволюционируют.  
-> Ожидайте баги, незавершённые экраны и изменения API без обратной совместимости.  
-> Репозиторий — **портфолио + рабочий прогресс**, а не production-релиз «из коробки».
-
----
+<h2 align="center">Maxsim (Axsion)</h2>
 
 <p align="center">
-<img src="https://avatars.githubusercontent.com/u/146373364?v=4" width="120" style="border-radius:50%">
+  Telegram Bot Developer · Python · AI
 </p>
-<h2 align="center">👨‍💻 Maxsim (Axsion)</h2>
+
 <p align="center">
-<img src="https://img.shields.io/badge/Age-17-blue?style=for-the-badge">
-<a href="https://github.com/AxsionTM">
-<img src="https://img.shields.io/badge/GitHub-Axsion-black?style=for-the-badge&logo=github">
-</a>
+  <a href="https://github.com/AxsionTM">
+    <img src="https://img.shields.io/badge/GitHub-Axsion-black?style=for-the-badge&logo=github">
+  </a>
 </p>
 
----
+О проекте
 
-## 📦 О проекте
+AI Chat Bot — Telegram-бот на Python с интеграцией Google Gemini.
 
-**NEXORA** — SaaS-платформа для управления бизнесом и аналитики: заказы, товары, клиенты, расходы, команда, уведомления и AI-ассистент в одном workspace.
+Общаться с нейросетью можно непосредственно в Telegram или через встроенный Telegram Mini App — веб-интерфейс с несколькими диалогами, боковой панелью и отдельным дизайном.
 
-Цель — дать предпринимателю «пульт управления» компанией: видеть выручку и прибыль, контролировать склад, работать с клиентами и получать ответы от нейросети по живым данным бизнеса.
-
-### Языки программирования
+Проект создан как учебный и портфолио-кейс для изучения разработки Telegram-ботов, интеграции внешних AI API и создания Telegram Mini Apps.
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white">
-  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white">
-  <img src="https://img.shields.io/badge/JavaScript-ES6-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black">
-  <img src="https://img.shields.io/badge/SQL-Queries-CC2927?style=for-the-badge&logo=mysql&logoColor=white">
-  <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white">
-  <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white">
+  <img src="https://img.shields.io/badge/aiogram-3.15-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white">
+  <img src="https://img.shields.io/badge/Google_Gemini-AI-8B7BFF?style=for-the-badge&logo=google&logoColor=white">
+  <img src="https://img.shields.io/badge/FastAPI-Mini%20App-009688?style=for-the-badge&logo=fastapi&logoColor=white">
+  <img src="https://img.shields.io/badge/SQLite-Storage-37E0C9?style=for-the-badge&logo=sqlite&logoColor=white">
 </p>
 
-### Backend & API
+Скриншоты
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Django-5-092E20?style=for-the-badge&logo=django&logoColor=white">
-  <img src="https://img.shields.io/badge/Django%20REST%20Framework-API-red?style=for-the-badge&logo=django&logoColor=white">
-  <img src="https://img.shields.io/badge/REST%20API-02569B?style=for-the-badge&logo=fastapi&logoColor=white">
-  <img src="https://img.shields.io/badge/SimpleJWT-Auth-black?style=for-the-badge">
-  <img src="https://img.shields.io/badge/JSON-000000?style=for-the-badge&logo=json&logoColor=white">
-  <img src="https://img.shields.io/badge/Webhooks-Integrations-6C63FF?style=for-the-badge">
+  <img src="docs/screenshots/hero-screen.png" width="49%" alt="Приветственный экран Mini App" />
+  <img src="docs/screenshots/chat-screen.png" width="49%" alt="Диалог с нейросетью в Mini App" />
 </p>
-
-### Базы данных
 
 <p align="center">
-  <img src="https://img.shields.io/badge/PostgreSQL-15-4169E1?style=for-the-badge&logo=postgresql&logoColor=white">
-  <img src="https://img.shields.io/badge/SQLite-Dev-003B57?style=for-the-badge&logo=sqlite&logoColor=white">
+  <sub>Слева — стартовый экран с подсказками, справа — диалог с генерацией кода на Python</sub>
 </p>
 
-### Frontend
+Функционал
 
-<p align="center">
-  <img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black">
-  <img src="https://img.shields.io/badge/Vite-5-646CFF?style=for-the-badge&logo=vite&logoColor=white">
-  <img src="https://img.shields.io/badge/Tailwind%20CSS-38B2AC?style=for-the-badge&logo=tailwindcss&logoColor=white">
-  <img src="https://img.shields.io/badge/React%20Router-CA4245?style=for-the-badge&logo=reactrouter&logoColor=white">
-  <img src="https://img.shields.io/badge/TanStack%20Query-FF4154?style=for-the-badge&logo=reactquery&logoColor=white">
-  <img src="https://img.shields.io/badge/Zustand-State-433E38?style=for-the-badge">
-  <img src="https://img.shields.io/badge/React%20Hook%20Form-EC5990?style=for-the-badge">
-  <img src="https://img.shields.io/badge/Zod-Validation-3E67B1?style=for-the-badge">
-  <img src="https://img.shields.io/badge/Recharts-Charts-8884d8?style=for-the-badge">
-  <img src="https://img.shields.io/badge/Framer%20Motion-Motion-0055FF?style=for-the-badge&logo=framer&logoColor=white">
-  <img src="https://img.shields.io/badge/Lucide-Icons-F56565?style=for-the-badge">
-</p>
+Чат с нейросетью непосредственно в Telegram
 
-### AI & интеграции
+Google Gemini в качестве AI-бэкенда
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Google%20Gemini-AI-8A2BE2?style=for-the-badge&logo=googlegemini&logoColor=white">
-  <img src="https://img.shields.io/badge/Telegram%20Bot%20API-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white">
-  <img src="https://img.shields.io/badge/SMTP%20Email-EA4335?style=for-the-badge&logo=gmail&logoColor=white">
-  <img src="https://img.shields.io/badge/CSV%20Export-217346?style=for-the-badge&logo=microsoftexcel&logoColor=white">
-  <img src="https://img.shields.io/badge/Slack%20Webhook-4A154B?style=for-the-badge&logo=slack&logoColor=white">
-</p>
+История диалогов для каждого пользователя
 
-### Инфраструктура & инструменты
+/reset для очистки истории диалога
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white">
-  <img src="https://img.shields.io/badge/docker%20compose-Infra-2496ED?style=for-the-badge&logo=docker&logoColor=white">
-  <img src="https://img.shields.io/badge/Nginx-Ready-009639?style=for-the-badge&logo=nginx&logoColor=white">
-  <img src="https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white">
-  <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white">
-  <img src="https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black">
-  <img src="https://img.shields.io/badge/dotenv-Config-ECD53F?style=for-the-badge">
-</p>
+Telegram Mini App с поддержкой нескольких чатов
 
-### Архитектура продукта
+Боковая панель со списком диалогов
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Workspace%20Isolation-Multi--tenant-7C3AED?style=for-the-badge">
-  <img src="https://img.shields.io/badge/RBAC-Roles-0EA5E9?style=for-the-badge">
-  <img src="https://img.shields.io/badge/Analytics%20Engine-KPI-10B981?style=for-the-badge">
-  <img src="https://img.shields.io/badge/License-Portfolio-red?style=for-the-badge">
-</p>
+Создание и удаление чатов
 
----
+Тёмная тема с градиентным акцентом и анимациями
 
-## ✨ Что уже есть (и что ещё сырое)
+Индикатор генерации ответа
 
-### Работает или близко к рабочему
-- 📊 **Дашборд и аналитика** — выручка, заказы, расходы, чистая прибыль, серии графиков
-- 📦 **Товары** — склад, активность, остатки
-- 🧾 **Заказы** — создание, статусы, оплата, учёт остатков
-- 👥 **Клиенты** и **расходы**
-- 👨‍👩‍👧 **Команда** — роли (владелец / админ / менеджер / сотрудник)
-- 🔔 **Уведомления** в приложении + каналы (Telegram / Email / Webhook / Slack)
-- 🤖 **AI-ассистент** (Google Gemini) с контекстом KPI workspace
-- 💼 **Кошелёк и тарифы** (Free / Pro / Business) с лимитами
-- ⚙️ **Настройки** — профиль, тема, workspace, интеграции
-- 🛠 **Django Admin** — выдача баланса и подписок, кастомная тема
+Автоматическая адаптация под светлую и тёмную тему Telegram
 
-### Ещё в процессе / нестабильно
-- Полноценный эквайринг и production-биллинг
-- Глубокие интеграции (Google Sheets OAuth, Google Analytics dashboard)
-- Полировка UX, edge-cases, нагрузка, тесты
-- Документация API и CI/CD «как в бою»
+Проверка подлинности запросов Mini App через initData и HMAC-подпись
 
-> **ЕЩЁ РАЗ: ПРОЕКТ НА СТАДИИ РЕАЛИЗАЦИИ, ОКОЛО ПОЛОВИНЫ ФУНКЦИОНАЛА СЫРОЕ.**  
-> Не используйте как единственную систему учёта в реальном бизнесе без доработки.
+Хранение истории Mini App в SQLite отдельно для каждого пользователя
 
----
+Общая функция generate_reply для Telegram-бота и Mini App
 
-## 🏗 Архитектура
+Архитектура проекта
 
-```
-nexora/
-├── frontend/                 # React + Vite + TypeScript + Tailwind
-│   └── src/
-│       ├── pages/            # Дашборд, заказы, AI, настройки…
-│       ├── components/       # UI, layout, landing
-│       ├── services/         # API-клиент
-│       └── stores/           # Zustand (auth, workspace, theme)
-├── backend/
-│   ├── apps/
-│   │   ├── users/            # JWT, кошелёк, тарифы, admin
-│   │   ├── business/         # заказы, аналитика, AI, интеграции
-│   │   └── core/
-│   └── config/               # settings, urls
-├── docker-compose.yml
-├── .env.example
+telegram-ai-bot/
+├── bot/
+│   ├── main.py                  # точка входа бота
+│   ├── config.py                # настройки из .env
+│   ├── handlers/
+│   │   └── common.py            # /start, /help, /reset и обработка текста
+│   └── services/
+│       └── ai.py                # интеграция с Gemini
+├── server/
+│   ├── main.py                  # FastAPI-бэкенд Mini App
+│   ├── db.py                    # SQLite-хранилище
+│   └── auth.py                  # проверка Telegram initData
+├── webapp/
+│   ├── index.html               # разметка Mini App
+│   ├── style.css                # стили и анимации
+│   └── app.js                   # логика интерфейса и API
+├── data/                        # SQLite-база
+├── docs/
+│   └── screenshots/             # скриншоты README
+├── .env.example                 # шаблон переменных окружения
+├── .gitignore
+├── requirements.txt
 └── README.md
-```
 
-**Frontend:** React, TypeScript, Vite, Tailwind, TanStack Query, Zustand, Recharts, Framer Motion  
-**Backend:** Django, DRF, SimpleJWT, PostgreSQL (SQLite для локального старта), Gemini API
+Быстрый старт
 
----
+1. Создание Telegram-бота
 
-## 🚀 Быстрый старт (локально)
+Откройте @BotFather в Telegram и выполните:
 
-### 1. Backend
+/newbot
 
-```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
+Задайте имя и username бота и получите токен.
+
+2. Установка
+
+git clone https://github.com/ТВОЙ_GITHUB/telegram-ai-bot.git
+cd telegram-ai-bot
+
+python -m venv venv
+
+Windows:
+
+venv\Scripts\activate
+
+Linux / macOS:
+
+source venv/bin/activate
+
+Установите зависимости:
+
 pip install -r requirements.txt
-cp ../.env.example ../.env         # заполните ключи
-python manage.py migrate
-python manage.py seed_demo         # демо-пользователь и данные
-python manage.py runserver
-```
 
-### 2. Frontend
+3. Настройка .env
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+Создайте файл на основе .env.example:
 
-Откройте `http://localhost:5173`.
+cp .env.example .env
 
-### 3. Демо-вход (после `seed_demo`)
+Заполните необходимые параметры:
 
-Данные сида смотрите в команде `seed_demo` / выводе консоли.  
-Админка: `http://localhost:8000/admin/`
+BOT_TOKEN=токен_от_botfather
 
-### 4. Переменные окружения (фрагмент)
+AI_PROVIDER=gemini
+AI_API_KEY=ключ_от_google_ai_studio
+AI_MODEL=gemini-3.5-flash-lite
 
-```env
-SECRET_KEY=change-me
-DEBUG=True
-GEMINI_API_KEY=
-GEMINI_MODEL=gemini-2.0-flash
-TELEGRAM_BOT_TOKEN=
-EMAIL_HOST=
-EMAIL_HOST_USER=
-EMAIL_HOST_PASSWORD=
-```
+API-ключ Gemini можно получить через Google AI Studio.
 
-Полный список — в `.env.example`. **Секреты в репозиторий не коммитятся.**
+Если нейросеть пока не подключена, можно использовать:
 
----
+AI_PROVIDER=none
 
-## 🎯 Для кого этот репозиторий
+В этом режиме бот будет отвечать эхом.
 
-- Показать **стек и архитектуру** SaaS (auth, workspace isolation, analytics, AI context)
-- Зафиксировать **прогресс разработки** NEXORA
-- **Не** как готовый SaaS для продакшена «скачал и заработал»
+4. Запуск бота
 
-Связь / вопросы: [Telegram @AxsionTM](https://t.me/AxsionTM) · [GitHub @AxsionTM](https://github.com/AxsionTM)
+python -m bot.main
 
----
+Telegram Mini App
 
-## 📄 Лицензия
+Mini App запускается отдельным процессом:
 
-Код публикуется в **ознакомительных и портфолио-целях**.  
-Копирование, модификация и коммерческое использование без согласия автора **запрещены**.  
-Все права защищены.
+uvicorn server.main:app --reload --port 8000
 
----
+Для работы внутри Telegram необходим публичный HTTPS-адрес.
+
+Для локальной разработки можно использовать ngrok:
+
+ngrok http 8000
+
+Полученный адрес укажите в .env:
+
+WEBAPP_URL=https://xxxx.ngrok-free.app
+
+После этого перезапустите бота.
+
+Под /start появится кнопка для открытия Mini App.
+
+Бесплатный адрес ngrok меняется после перезапуска. Для постоянного адреса требуется полноценный деплой.
+
+Нейросеть
+
+В качестве AI-бэкенда используется Google Gemini через официальный SDK google-genai.
+
+Основная логика работы с моделью находится в:
+
+bot/services/ai.py
+
+Функция generate_reply используется одновременно Telegram-ботом и Mini App, что позволяет избежать дублирования AI-логики.
+
+Для выбора другой модели необходимо изменить значение AI_MODEL в .env.
+
+Возможные AI-провайдеры
+
+Архитектура позволяет заменить текущий AI-бэкенд на другой сервис.
+
+Сервис
+
+Особенности
+
+Google Gemini
+
+Основной AI-провайдер проекта
+
+Groq
+
+Быстрый inference
+
+OpenRouter
+
+Доступ к нескольким моделям через единый API
+
+Hugging Face Inference API
+
+Доступ к открытым моделям
+
+Планы по развитию
+
+Деплой бота и Mini App с постоянным HTTPS-адресом
+
+Стриминг ответа нейросети
+
+Выбор модели или личности бота через интерфейс
+
+Rate limit для пользователей
+
+Логирование диалогов для анализа
+
+Лицензия
+
+Учебный проект. Код открыт для ознакомления и переиспользования.
 
 <p align="center">
-  <b>NEXORA — IN DEVELOPMENT · NOT PRODUCTION-READY</b>
+  Made by <a href="https://github.com/AxsionTM">Axsion</a>
 </p>
 
 <p align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12,14,20&height=100&section=footer" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:37E0C9,100:8B7BFF&height=100&section=footer" />
 </p>
